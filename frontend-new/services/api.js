@@ -43,9 +43,8 @@ api.interceptors.response.use(
 // Authentication API
 export const authAPI = {
     login: async (credentials) => {
-        // Try admin login first, then student login
         try {
-            const response = await api.post('/auth/login-admin', credentials);
+            const response = await api.post('/api/auth/login', credentials);
             if (response.success && response.token) {
                 localStorage.setItem('token', response.token);
                 localStorage.setItem('user', JSON.stringify(response.user));
@@ -55,26 +54,14 @@ export const authAPI = {
                 return response;
             }
         } catch (error) {
-            // If admin login fails, try simple student login
-            try {
-                const response = await api.post('/auth/login-simple', credentials);
-                if (response.success && response.token) {
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('user', JSON.stringify(response.user));
-                    if (response.student) {
-                        localStorage.setItem('student', JSON.stringify(response.student));
-                    }
-                    return response;
-                }
-            } catch (studentError) {
-                throw studentError;
-            }
+            console.error('Login error:', error);
+            throw error;
         }
         throw new Error('Login failed');
     },
 
     register: async (userData) => {
-        const response = await api.post('/auth/register-simple', userData);
+        const response = await api.post('/api/auth/register', userData);
         if (response.success && response.token) {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
