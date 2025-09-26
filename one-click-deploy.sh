@@ -103,14 +103,47 @@ print_success "تم إنشاء مجلد المشروع!"
 
 # تحميل المشروع
 print_header "📥 تحميل المشروع من GitHub"
-# حذف المجلد الحالي بالكامل
+# حذف المجلد الحالي بالكامل بطريقة أكثر فعالية
 cd ..
-rm -rf unitrans
+print_status "حذف المجلد السابق..."
+rm -rf unitrans 2>/dev/null || true
+sleep 2
+
+# التحقق من أن المجلد محذوف تماماً
+if [ -d "unitrans" ]; then
+    print_status "إجبار حذف المجلد..."
+    sudo rm -rf unitrans 2>/dev/null || true
+    sleep 1
+fi
+
+print_status "إنشاء مجلد جديد..."
 mkdir -p unitrans
 cd unitrans
-# تحميل المشروع
-git clone https://github.com/MahmouT1/unitrans.git .
-print_success "تم تحميل المشروع بنجاح!"
+
+# التحقق من أن المجلد فارغ تماماً
+if [ "$(ls -A . 2>/dev/null)" ]; then
+    print_status "تنظيف المجلد من الملفات المتبقية..."
+    rm -rf * .* 2>/dev/null || true
+fi
+
+print_status "تحميل المشروع من GitHub..."
+# تحميل المشروع مع معالجة الأخطاء
+if ! git clone https://github.com/MahmouT1/unitrans.git .; then
+    print_error "فشل في تحميل المشروع من GitHub"
+    print_status "محاولة حل بديل..."
+    
+    # حل بديل: تحميل كـ zip
+    print_status "تحميل المشروع كـ ZIP..."
+    wget -O unitrans.zip https://github.com/MahmouT1/unitrans/archive/refs/heads/main.zip
+    unzip -o unitrans.zip
+    mv unitrans-main/* .
+    mv unitrans-main/.* . 2>/dev/null || true
+    rm -rf unitrans-main unitrans.zip
+    
+    print_success "تم تحميل المشروع بنجاح باستخدام ZIP!"
+else
+    print_success "تم تحميل المشروع بنجاح!"
+fi
 
 # إنشاء مجلدات الصور والملفات
 print_header "📁 إنشاء مجلدات الصور والملفات"
