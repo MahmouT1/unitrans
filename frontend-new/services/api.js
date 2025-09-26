@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
+    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname === 'unibus.online' ? 'https://unibus.online:3001' : 'http://localhost:3001'),
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',

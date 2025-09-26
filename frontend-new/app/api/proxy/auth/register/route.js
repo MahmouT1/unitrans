@@ -7,7 +7,8 @@ export async function POST(request) {
     console.log('🔄 Proxying register request to backend...');
     
     // Forward request to backend
-    const backendResponse = await fetch('http://localhost:3001/api/auth/register', {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const backendResponse = await fetch(`${backendUrl}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
