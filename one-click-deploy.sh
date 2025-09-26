@@ -103,11 +103,11 @@ print_success "تم إنشاء مجلد المشروع!"
 
 # تحميل المشروع
 print_header "📥 تحميل المشروع من GitHub"
-# حذف المجلد إذا كان موجوداً
-rm -rf .git
-rm -rf * .*
-# حذف جميع الملفات والمجلدات
-find . -maxdepth 1 -not -name '.' -exec rm -rf {} + 2>/dev/null || true
+# حذف المجلد الحالي بالكامل
+cd ..
+rm -rf unitrans
+mkdir -p unitrans
+cd unitrans
 # تحميل المشروع
 git clone https://github.com/MahmouT1/unitrans.git .
 print_success "تم تحميل المشروع بنجاح!"
