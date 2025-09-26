@@ -1,0 +1,331 @@
+#!/bin/bash
+
+# 🚀 UniBus One-Click Deployment Script
+# سكريبت رفع مشروع UniBus بنقرة واحدة على VPS
+
+set -e
+
+# ألوان للطباعة
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+NC='\033[0m'
+
+# متغيرات المشروع
+PROJECT_DIR="/var/www/unitrans"
+DOMAIN=""
+EMAIL=""
+MONGO_PASSWORD=""
+
+# دالة طباعة الرسائل
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_header() {
+    echo -e "${PURPLE}================================${NC}"
+    echo -e "${PURPLE}$1${NC}"
+    echo -e "${PURPLE}================================${NC}"
+}
+
+# التحقق من صلاحيات المدير
+if [ "$EUID" -ne 0 ]; then
+    print_error "يرجى تشغيل السكريبت كمدير (root)"
+    exit 1
+fi
+
+# الحصول على البيانات من المستخدم
+print_header "🚀 UniBus - رفع المشروع على VPS"
+echo ""
+echo "مرحباً! سأقوم برفع مشروع UniBus على خادمك تلقائياً"
+echo ""
+
+read -p "أدخل اسم الدومين (مثال: yourdomain.com): " DOMAIN
+read -p "أدخل بريدك الإلكتروني للـ SSL: " EMAIL
+read -s -p "أدخل كلمة مرور MongoDB: " MONGO_PASSWORD
+echo ""
+
+print_success "تم حفظ البيانات بنجاح!"
+
+# تحديث النظام
+print_header "📦 تحديث النظام"
+apt update && apt upgrade -y
+apt install -y curl wget git vim htop unzip software-properties-common
+print_success "تم تحديث النظام بنجاح!"
+
+# تثبيت Node.js
+print_header "📦 تثبيت Node.js"
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+apt-get install -y nodejs
+print_success "تم تثبيت Node.js بنجاح!"
+
+# تثبيت PM2
+print_header "📦 تثبيت PM2"
+npm install -g pm2
+pm2 install pm2-logrotate
+print_success "تم تثبيت PM2 بنجاح!"
+
+# تثبيت MongoDB
+print_header "📦 تثبيت MongoDB"
+wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+apt update
+apt install -y mongodb-org
+systemctl start mongod
+systemctl enable mongod
+print_success "تم تثبيت MongoDB بنجاح!"
+
+# تثبيت Nginx
+print_header "📦 تثبيت Nginx"
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
+print_success "تم تثبيت Nginx بنجاح!"
+
+# تثبيت SSL
+print_header "📦 تثبيت أدوات SSL"
+apt install -y certbot python3-certbot-nginx
+print_success "تم تثبيت أدوات SSL بنجاح!"
+
+# إنشاء مجلد المشروع
+print_header "📁 إنشاء مجلد المشروع"
+mkdir -p $PROJECT_DIR
+cd $PROJECT_DIR
+print_success "تم إنشاء مجلد المشروع!"
+
+# تحميل المشروع
+print_header "📥 تحميل المشروع من GitHub"
+git clone https://github.com/MahmouT1/unitrans.git .
+print_success "تم تحميل المشروع بنجاح!"
+
+# تثبيت dependencies
+print_header "📦 تثبيت المكتبات"
+cd backend-new
+npm install
+cd ../frontend-new
+npm install
+npm run build
+cd ..
+print_success "تم تثبيت جميع المكتبات بنجاح!"
+
+# إنشاء ملفات البيئة
+print_header "⚙️ إعداد ملفات البيئة"
+cat > backend-new/.env << EOF
+PORT=3001
+MONGODB_URI=mongodb://localhost:27017
+DB_NAME=unitrans
+JWT_SECRET=$(openssl rand -base64 32)
+NODE_ENV=production
+EOF
+
+cat > frontend-new/.env.local << EOF
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NODE_ENV=production
+EOF
+print_success "تم إنشاء ملفات البيئة بنجاح!"
+
+# إعداد PM2
+print_header "⚙️ إعداد PM2"
+cat > ecosystem.config.js << EOF
+module.exports = {
+  apps: [
+    {
+      name: 'unitrans-backend',
+      script: './backend-new/server.js',
+      cwd: '$PROJECT_DIR',
+      instances: 1,
+      exec_mode: 'fork',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3001
+      },
+      error_file: '/var/log/pm2/unitrans-backend-error.log',
+      out_file: '/var/log/pm2/unitrans-backend-out.log',
+      log_file: '/var/log/pm2/unitrans-backend.log',
+      time: true
+    },
+    {
+      name: 'unitrans-frontend',
+      script: 'npm',
+      args: 'start',
+      cwd: '$PROJECT_DIR/frontend-new',
+      instances: 1,
+      exec_mode: 'fork',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000
+      },
+      error_file: '/var/log/pm2/unitrans-frontend-error.log',
+      out_file: '/var/log/pm2/unitrans-frontend-out.log',
+      log_file: '/var/log/pm2/unitrans-frontend.log',
+      time: true
+    }
+  ]
+};
+EOF
+
+# تشغيل التطبيقات
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
+print_success "تم تشغيل التطبيقات بنجاح!"
+
+# إعداد Nginx
+print_header "🌐 إعداد Nginx"
+cat > /etc/nginx/sites-available/unitrans << EOF
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+
+    location /api/ {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+
+    location /_next/static/ {
+        proxy_pass http://localhost:3000;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /uploads/ {
+        alias $PROJECT_DIR/frontend-new/public/uploads/;
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+}
+EOF
+
+# تفعيل الموقع
+ln -sf /etc/nginx/sites-available/unitrans /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+nginx -t
+systemctl reload nginx
+print_success "تم إعداد Nginx بنجاح!"
+
+# إعداد SSL
+print_header "🔒 إعداد SSL"
+certbot --nginx -d $DOMAIN -d www.$DOMAIN --email $EMAIL --agree-tos --non-interactive
+print_success "تم إعداد SSL بنجاح!"
+
+# إعداد MongoDB
+print_header "🗄️ إعداد قاعدة البيانات"
+mongosh --eval "
+use unitrans;
+db.createUser({
+  user: 'unitrans_user',
+  pwd: '$MONGO_PASSWORD',
+  roles: ['readWrite']
+});
+"
+print_success "تم إعداد قاعدة البيانات بنجاح!"
+
+# إضافة بيانات تجريبية
+print_header "🌱 إضافة البيانات التجريبية"
+cd backend-new
+node scripts/seedData.js
+cd ..
+print_success "تم إضافة البيانات التجريبية بنجاح!"
+
+# إعداد Firewall
+print_header "🛡️ إعداد Firewall"
+ufw --force enable
+ufw allow 22
+ufw allow 80
+ufw allow 443
+ufw allow 3000
+ufw allow 3001
+print_success "تم إعداد Firewall بنجاح!"
+
+# إنشاء سكريبت التحديث
+print_header "🔄 إنشاء سكريبت التحديث"
+cat > $PROJECT_DIR/update.sh << 'EOF'
+#!/bin/bash
+cd /var/www/unitrans
+git pull origin main
+cd backend-new
+npm install
+cd ../frontend-new
+npm install
+npm run build
+pm2 restart all
+echo "تم تحديث المشروع بنجاح!"
+EOF
+
+chmod +x $PROJECT_DIR/update.sh
+print_success "تم إنشاء سكريبت التحديث!"
+
+# إنشاء سكريبت النسخ الاحتياطية
+print_header "💾 إنشاء سكريبت النسخ الاحتياطية"
+mkdir -p /backup/unitrans
+cat > $PROJECT_DIR/backup.sh << 'EOF'
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+mongodump --db unitrans --out /backup/unitrans/mongodb_$DATE
+tar -czf /backup/unitrans/unitrans_$DATE.tar.gz /var/www/unitrans
+find /backup/unitrans -name "*" -mtime +7 -delete
+echo "تم إنشاء نسخة احتياطية: $DATE"
+EOF
+
+chmod +x $PROJECT_DIR/backup.sh
+print_success "تم إنشاء سكريبت النسخ الاحتياطية!"
+
+# إعداد Cron Jobs
+print_header "⏰ إعداد المهام التلقائية"
+(crontab -l 2>/dev/null; echo "0 2 * * * $PROJECT_DIR/backup.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 3 * * * $PROJECT_DIR/update.sh") | crontab -
+print_success "تم إعداد المهام التلقائية!"
+
+# فحص الحالة النهائية
+print_header "✅ فحص الحالة النهائية"
+echo ""
+echo -e "${GREEN}🎉 تم رفع المشروع بنجاح!${NC}"
+echo ""
+echo -e "${BLUE}📊 حالة النظام:${NC}"
+pm2 status
+echo ""
+echo -e "${BLUE}🌐 روابط المشروع:${NC}"
+echo "الواجهة الأمامية: http://localhost:3000"
+echo "الواجهة الخلفية: http://localhost:3001"
+echo "الموقع الإنتاجي: https://$DOMAIN"
+echo ""
+echo -e "${BLUE}📝 أوامر مفيدة:${NC}"
+echo "pm2 status          - فحص حالة التطبيقات"
+echo "pm2 logs            - عرض السجلات"
+echo "pm2 restart all     - إعادة تشغيل التطبيقات"
+echo "$PROJECT_DIR/update.sh      - تحديث المشروع"
+echo "$PROJECT_DIR/backup.sh      - إنشاء نسخة احتياطية"
+echo ""
+echo -e "${GREEN}🚀 مشروع UniBus جاهز للاستخدام على: https://$DOMAIN${NC}"
+echo ""
+print_success "تم الانتهاء من الرفع بنجاح!"
