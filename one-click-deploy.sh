@@ -212,6 +212,9 @@ rm -f app/admin/supervisor-dashboard-enhanced/page.js
 rm -f lib/Student.js
 rm -f lib/User.js
 rm -f components/WorkingQRScannerFixed.js
+rm -f app/api/attendance/register-simple/route.js
+rm -f app/api/attendance/scan-qr/route.js
+rm -f app/api/students/profile/route.js
 
 # بناء المشروع
 npm run build
