@@ -105,7 +105,7 @@ print_success "تم إنشاء مجلد المشروع!"
 print_header "📥 تحميل المشروع من GitHub"
 # حذف المجلد إذا كان موجوداً
 rm -rf .git
-rm -rf *
+rm -rf * .*
 # تحميل المشروع
 git clone https://github.com/MahmouT1/unitrans.git .
 print_success "تم تحميل المشروع بنجاح!"
