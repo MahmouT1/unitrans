@@ -121,6 +121,22 @@ cd backend-new
 npm install
 cd ../frontend-new
 npm install
+
+# تثبيت المكتبات المفقودة
+print_header "📦 تثبيت المكتبات المفقودة"
+npm install axios
+npm install qrcode
+npm install jsqr
+npm install zxing
+
+# حذف الملفات المفقودة
+print_header "🗑️ حذف الملفات المفقودة"
+rm -f app/admin/supervisor-dashboard-enhanced/page.js
+rm -f lib/Student.js
+rm -f lib/User.js
+rm -f components/WorkingQRScannerFixed.js
+
+# بناء المشروع
 npm run build
 cd ..
 print_success "تم تثبيت جميع المكتبات بنجاح!"
