@@ -17,7 +17,6 @@ NC='\033[0m'
 PROJECT_DIR="/var/www/unitrans"
 DOMAIN=""
 EMAIL=""
-MONGO_PASSWORD=""
 
 # دالة طباعة الرسائل
 print_status() {
@@ -52,7 +51,6 @@ echo ""
 
 read -p "أدخل اسم الدومين (مثال: yourdomain.com): " DOMAIN
 read -p "أدخل بريدك الإلكتروني للـ SSL: " EMAIL
-read -s -p "أدخل كلمة مرور MongoDB: " MONGO_PASSWORD
 echo ""
 
 print_success "تم حفظ البيانات بنجاح!"
@@ -63,11 +61,11 @@ apt update && apt upgrade -y
 apt install -y curl wget git vim htop unzip software-properties-common
 print_success "تم تحديث النظام بنجاح!"
 
-# تثبيت Node.js
-print_header "📦 تثبيت Node.js"
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+# تثبيت Node.js 22.x
+print_header "📦 تثبيت Node.js 22.x"
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 apt-get install -y nodejs
-print_success "تم تثبيت Node.js بنجاح!"
+print_success "تم تثبيت Node.js $(node --version) بنجاح!"
 
 # تثبيت PM2
 print_header "📦 تثبيت PM2"
@@ -122,7 +120,7 @@ print_success "تم تثبيت جميع المكتبات بنجاح!"
 print_header "⚙️ إعداد ملفات البيئة"
 cat > backend-new/.env << EOF
 PORT=3001
-MONGODB_URI=mongodb://localhost:27017
+MONGODB_URI=mongodb://localhost:27017/unitrans
 DB_NAME=unitrans
 JWT_SECRET=$(openssl rand -base64 32)
 NODE_ENV=production
@@ -238,15 +236,11 @@ print_header "🔒 إعداد SSL"
 certbot --nginx -d $DOMAIN -d www.$DOMAIN --email $EMAIL --agree-tos --non-interactive
 print_success "تم إعداد SSL بنجاح!"
 
-# إعداد MongoDB
+# إعداد MongoDB (بدون كلمة مرور)
 print_header "🗄️ إعداد قاعدة البيانات"
 mongosh --eval "
 use unitrans;
-db.createUser({
-  user: 'unitrans_user',
-  pwd: '$MONGO_PASSWORD',
-  roles: ['readWrite']
-});
+db.createCollection('test');
 "
 print_success "تم إعداد قاعدة البيانات بنجاح!"
 
