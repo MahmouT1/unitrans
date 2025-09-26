@@ -106,6 +106,8 @@ print_header "📥 تحميل المشروع من GitHub"
 # حذف المجلد إذا كان موجوداً
 rm -rf .git
 rm -rf * .*
+# حذف جميع الملفات والمجلدات
+find . -maxdepth 1 -not -name '.' -exec rm -rf {} + 2>/dev/null || true
 # تحميل المشروع
 git clone https://github.com/MahmouT1/unitrans.git .
 print_success "تم تحميل المشروع بنجاح!"
