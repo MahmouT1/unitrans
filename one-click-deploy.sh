@@ -58,7 +58,7 @@ print_success "تم حفظ البيانات بنجاح!"
 # تحديث النظام
 print_header "📦 تحديث النظام"
 apt update && apt upgrade -y
-apt install -y curl wget git vim htop unzip software-properties-common
+apt install -y curl wget git vim htop unzip software-properties-common rsync tar findutils
 print_success "تم تحديث النظام بنجاح!"
 
 # تثبيت Node.js 22.x
@@ -127,23 +127,61 @@ if [ "$(ls -A . 2>/dev/null)" ]; then
 fi
 
 print_status "تحميل المشروع من GitHub..."
-# تحميل المشروع مع معالجة الأخطاء
-if ! git clone https://github.com/MahmouT1/unitrans.git .; then
+# استخدام استراتيجية مختلفة: تحميل في مجلد مؤقت ثم نقل الملفات
+print_status "تحميل المشروع في مجلد مؤقت..."
+cd ..
+if [ -d "unitrans-temp" ]; then
+    rm -rf unitrans-temp
+fi
+
+# محاولة استخدام git archive أولاً (أسرع وأكثر موثوقية)
+print_status "محاولة تحميل المشروع باستخدام git archive..."
+if git archive --remote=https://github.com/MahmouT1/unitrans.git HEAD | tar -x -C unitrans/ 2>/dev/null; then
+    print_success "تم تحميل المشروع بنجاح باستخدام git archive!"
+else
+    # تحميل المشروع في مجلد مؤقت
+    if git clone https://github.com/MahmouT1/unitrans.git unitrans-temp; then
+    print_status "نقل الملفات إلى المجلد النهائي..."
+    # نقل جميع الملفات من المجلد المؤقت إلى المجلد النهائي
+    # استخدام rsync للتأكد من نقل جميع الملفات
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -av --delete unitrans-temp/ unitrans/
+    else
+        # استخدام cp مع خيارات أكثر قوة
+        cp -r unitrans-temp/* unitrans/ 2>/dev/null || true
+        cp -r unitrans-temp/.* unitrans/ 2>/dev/null || true
+    fi
+    # حذف المجلد المؤقت
+    rm -rf unitrans-temp
+    print_success "تم تحميل المشروع بنجاح!"
+else
     print_error "فشل في تحميل المشروع من GitHub"
-    print_status "محاولة حل بديل..."
+    print_status "محاولة حل بديل بـ ZIP..."
     
     # حل بديل: تحميل كـ zip
     print_status "تحميل المشروع كـ ZIP..."
     wget -O unitrans.zip https://github.com/MahmouT1/unitrans/archive/refs/heads/main.zip
     unzip -o unitrans.zip
-    mv unitrans-main/* .
-    mv unitrans-main/.* . 2>/dev/null || true
+    
+    # استخدام tar للتأكد من نقل جميع الملفات
+    if command -v tar >/dev/null 2>&1; then
+        print_status "نقل الملفات باستخدام tar..."
+        tar -cf - -C unitrans-main . | tar -xf - -C unitrans/
+    else
+        # استخدام find و xargs للتأكد من نقل جميع الملفات
+        print_status "نقل الملفات باستخدام find و xargs..."
+        find unitrans-main -type f -exec cp --parents {} unitrans/ \; 2>/dev/null || true
+        find unitrans-main -type d -exec mkdir -p unitrans/{} \; 2>/dev/null || true
+    fi
+    
     rm -rf unitrans-main unitrans.zip
     
     print_success "تم تحميل المشروع بنجاح باستخدام ZIP!"
-else
-    print_success "تم تحميل المشروع بنجاح!"
+    fi
 fi
+
+# العودة إلى مجلد المشروع
+cd unitrans
 
 # إنشاء مجلدات الصور والملفات
 print_header "📁 إنشاء مجلدات الصور والملفات"
