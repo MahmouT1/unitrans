@@ -75,7 +75,7 @@ export default function UnifiedAuth() {
               role: role
             };
             
-            const result = await apiCall('/api/proxy/auth/login', {
+            const result = await apiCall('/api/auth/login', {
               method: 'POST',
               body: JSON.stringify(requestData),
             });
@@ -137,7 +137,7 @@ export default function UnifiedAuth() {
 
       // For registration only
       if (!isLogin) {
-        const result = await apiCall('/api/proxy/auth/register', {
+        const result = await apiCall('/api/auth/register', {
           method: 'POST',
           body: JSON.stringify(requestData),
         });
