@@ -106,6 +106,15 @@ print_header "📥 تحميل المشروع من GitHub"
 git clone https://github.com/MahmouT1/unitrans.git .
 print_success "تم تحميل المشروع بنجاح!"
 
+# إنشاء مجلدات الصور والملفات
+print_header "📁 إنشاء مجلدات الصور والملفات"
+mkdir -p frontend-new/public/uploads
+mkdir -p frontend-new/public/profiles
+mkdir -p backend-new/uploads
+mkdir -p backend-new/uploads/profiles
+mkdir -p backend-new/data
+print_success "تم إنشاء مجلدات الصور والملفات بنجاح!"
+
 # تثبيت dependencies
 print_header "📦 تثبيت المكتبات"
 cd backend-new
@@ -221,6 +230,20 @@ server {
         expires 1y;
         add_header Cache-Control "public";
     }
+
+    # Profiles
+    location /profiles/ {
+        alias $PROJECT_DIR/frontend-new/public/profiles/;
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+
+    # Backend uploads
+    location /backend-uploads/ {
+        alias $PROJECT_DIR/backend-new/uploads/;
+        expires 1y;
+        add_header Cache-Control "public";
+    }
 }
 EOF
 
@@ -241,6 +264,15 @@ print_header "🗄️ إعداد قاعدة البيانات"
 mongosh --eval "
 use unitrans;
 db.createCollection('test');
+db.createCollection('students');
+db.createCollection('users');
+db.createCollection('attendance');
+db.createCollection('shifts');
+db.createCollection('subscriptions');
+db.createCollection('supporttickets');
+db.createCollection('driversalaries');
+db.createCollection('expenses');
+db.createCollection('transportation');
 "
 print_success "تم إعداد قاعدة البيانات بنجاح!"
 
@@ -250,6 +282,16 @@ cd backend-new
 node scripts/seedData.js
 cd ..
 print_success "تم إضافة البيانات التجريبية بنجاح!"
+
+# إعداد صلاحيات الملفات
+print_header "🔐 إعداد صلاحيات الملفات"
+chown -R www-data:www-data $PROJECT_DIR/frontend-new/public/uploads
+chown -R www-data:www-data $PROJECT_DIR/frontend-new/public/profiles
+chown -R www-data:www-data $PROJECT_DIR/backend-new/uploads
+chmod -R 755 $PROJECT_DIR/frontend-new/public/uploads
+chmod -R 755 $PROJECT_DIR/frontend-new/public/profiles
+chmod -R 755 $PROJECT_DIR/backend-new/uploads
+print_success "تم إعداد صلاحيات الملفات بنجاح!"
 
 # إعداد Firewall
 print_header "🛡️ إعداد Firewall"
@@ -300,6 +342,18 @@ print_header "⏰ إعداد المهام التلقائية"
 (crontab -l 2>/dev/null; echo "0 3 * * * $PROJECT_DIR/update.sh") | crontab -
 print_success "تم إعداد المهام التلقائية!"
 
+# فحص اتصال قاعدة البيانات
+print_header "🔍 فحص اتصال قاعدة البيانات"
+mongosh --eval "
+use unitrans;
+db.stats();
+" > /dev/null 2>&1 && print_success "✅ اتصال قاعدة البيانات يعمل بنجاح!" || print_error "❌ مشكلة في اتصال قاعدة البيانات"
+
+# فحص التطبيقات
+print_header "🔍 فحص التطبيقات"
+curl -s http://localhost:3000 > /dev/null && print_success "✅ الواجهة الأمامية تعمل بنجاح!" || print_error "❌ مشكلة في الواجهة الأمامية"
+curl -s http://localhost:3001/api/health > /dev/null && print_success "✅ الواجهة الخلفية تعمل بنجاح!" || print_error "❌ مشكلة في الواجهة الخلفية"
+
 # فحص الحالة النهائية
 print_header "✅ فحص الحالة النهائية"
 echo ""
@@ -312,6 +366,13 @@ echo -e "${BLUE}🌐 روابط المشروع:${NC}"
 echo "الواجهة الأمامية: http://localhost:3000"
 echo "الواجهة الخلفية: http://localhost:3001"
 echo "الموقع الإنتاجي: https://$DOMAIN"
+echo "لوحة التحكم: https://$DOMAIN/admin"
+echo "QR Scanner: https://$DOMAIN/admin/supervisor-dashboard"
+echo ""
+echo -e "${BLUE}📁 مجلدات الصور:${NC}"
+echo "الصور العامة: $PROJECT_DIR/frontend-new/public/uploads/"
+echo "صور الملفات الشخصية: $PROJECT_DIR/frontend-new/public/profiles/"
+echo "صور الخادم: $PROJECT_DIR/backend-new/uploads/"
 echo ""
 echo -e "${BLUE}📝 أوامر مفيدة:${NC}"
 echo "pm2 status          - فحص حالة التطبيقات"
