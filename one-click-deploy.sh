@@ -211,10 +211,19 @@ print_header "🗑️ حذف الملفات المفقودة"
 rm -f app/admin/supervisor-dashboard-enhanced/page.js
 rm -f lib/Student.js
 rm -f lib/User.js
+rm -f lib/SupportTicket.js
+rm -f lib/UserSimple.js
+rm -f lib/StudentSimple.js
 rm -f components/WorkingQRScannerFixed.js
 rm -f app/api/attendance/register-simple/route.js
 rm -f app/api/attendance/scan-qr/route.js
 rm -f app/api/students/profile/route.js
+rm -f app/api/support/tickets/route.js
+rm -f app/api/test-db/route.js
+rm -f app/api/test-student-simple/route.js
+rm -f app/api/test-student/route.js
+rm -f app/api/test-user-simple/route.js
+rm -f app/api/test-user/route.js
 
 # بناء المشروع
 npm run build
