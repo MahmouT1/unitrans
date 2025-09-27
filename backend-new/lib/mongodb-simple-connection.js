@@ -12,7 +12,7 @@ async function getDatabase() {
   }
 
   const uri = process.env.MONGODB_URI || process.env.MONGO_URL || 'mongodb://127.0.0.1:27017';
-  const dbName = process.env.MONGODB_DB || process.env.DB_NAME || 'student_portal';
+  const dbName = process.env.MONGODB_DB || process.env.DB_NAME || 'unitrans';
 
   if (!cachedClient) {
     cachedClient = new MongoClient(uri, {
