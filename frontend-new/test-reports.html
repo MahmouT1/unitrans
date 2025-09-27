@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار التقارير المالية - UniBus</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        .header h1 {
+            color: #667eea;
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .section h2 {
+            color: #495057;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6c757d;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 5px solid #667eea;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .revenue { border-left-color: #28a745; }
+        .expenses { border-left-color: #dc3545; }
+        .drivers { border-left-color: #ffc107; }
+        .profit { border-left-color: #17a2b8; }
+        .form-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .form {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .form h3 {
+            color: #495057;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6c757d;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn.btn-success {
+            background: #28a745;
+        }
+        .btn.btn-success:hover {
+            background: #218838;
+        }
+        .btn.btn-danger {
+            background: #dc3545;
+        }
+        .btn.btn-danger:hover {
+            background: #c82333;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+            .form-section {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 اختبار التقارير المالية</h1>
+            <p>نظام إدارة مالي شامل للنقل الجامعي</p>
+            <div id="connection-status" class="status loading">جاري فحص الاتصال...</div>
+        </div>
+
+        <div class="section">
+            <h2>📊 الإحصائيات المالية</h2>
+            <div id="stats-status" class="status loading">جاري تحميل البيانات...</div>
+            <div class="stats-grid">
+                <div class="stat-card revenue">
+                    <div class="stat-label">💰 إجمالي الإيرادات</div>
+                    <div class="stat-value" id="total-revenue">--</div>
+                    <small>من الاشتراكات</small>
+                </div>
+                <div class="stat-card expenses">
+                    <div class="stat-label">💸 إجمالي المصروفات</div>
+                    <div class="stat-value" id="total-expenses">--</div>
+                    <small>المصروفات الجانبية</small>
+                </div>
+                <div class="stat-card drivers">
+                    <div class="stat-label">🚌 رواتب السائقين</div>
+                    <div class="stat-value" id="total-drivers">--</div>
+                    <small>إجمالي الرواتب</small>
+                </div>
+                <div class="stat-card profit">
+                    <div class="stat-label">📈 صافي الربح</div>
+                    <div class="stat-value" id="net-profit">--</div>
+                    <small>الربح الصافي</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form">
+                <h3>💸 إضافة مصروف جديد</h3>
+                <form id="expense-form">
+                    <div class="form-group">
+                        <label>نوع المصروف*</label>
+                        <input type="text" id="expense-type" placeholder="مثال: وقود، صيانة، مكتب" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ (جنيه)*</label>
+                        <input type="number" id="expense-amount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>التصنيف*</label>
+                        <select id="expense-category" required>
+                            <option value="fuel">وقود</option>
+                            <option value="maintenance">صيانة</option>
+                            <option value="office">مكتب</option>
+                            <option value="utilities">خدمات</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ*</label>
+                        <input type="date" id="expense-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف</label>
+                        <textarea id="expense-description" placeholder="وصف مختصر للمصروف" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">إضافة مصروف</button>
+                </form>
+            </div>
+
+            <div class="form">
+                <h3>🚌 إضافة راتب سائق</h3>
+                <form id="driver-form">
+                    <div class="form-group">
+                        <label>اسم السائق*</label>
+                        <input type="text" id="driver-name" placeholder="الاسم الكامل للسائق" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ (جنيه)*</label>
+                        <input type="number" id="driver-amount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ساعات العمل</label>
+                        <input type="number" id="driver-hours" placeholder="إجمالي الساعات" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>معدل الساعة (جنيه)</label>
+                        <input type="number" id="driver-rate" placeholder="سعر الساعة" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ*</label>
+                        <input type="date" id="driver-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات</label>
+                        <textarea id="driver-notes" placeholder="ملاحظات إضافية" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">إضافة راتب</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔄 العمليات</h2>
+            <button onclick="refreshData()" class="btn">تحديث البيانات</button>
+            <button onclick="clearLog()" class="btn" style="background: #6c757d;">مسح السجل</button>
+            <div id="operation-log" class="log">سجل العمليات سيظهر هنا...</div>
+        </div>
+    </div>
+
+    <script>
+        let logContent = '';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            logContent += `[${timestamp}] ${icon} ${message}\n`;
+            document.getElementById('operation-log').textContent = logContent;
+            document.getElementById('operation-log').scrollTop = document.getElementById('operation-log').scrollHeight;
+        }
+
+        function clearLog() {
+            logContent = '';
+            document.getElementById('operation-log').textContent = 'سجل العمليات سيظهر هنا...';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ar-EG', {
+                style: 'currency',
+                currency: 'EGP'
+            }).format(amount);
+        }
+
+        async function checkConnection() {
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                document.getElementById('connection-status').className = 'status success';
+                document.getElementById('connection-status').textContent = '✅ متصل بالخادم';
+                log('تم الاتصال بالخادم بنجاح', 'success');
+                return true;
+            } catch (error) {
+                document.getElementById('connection-status').className = 'status error';
+                document.getElementById('connection-status').textContent = '❌ لا يمكن الاتصال بالخادم';
+                log('فشل في الاتصال بالخادم: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function loadFinancialData() {
+            try {
+                log('جاري تحميل البيانات المالية...');
+                const response = await fetch('http://localhost:3001/api/reports/financial-summary');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.report) {
+                    const { summary } = data.report;
+                    
+                    document.getElementById('total-revenue').textContent = formatCurrency(summary.totalRevenue || 0);
+                    document.getElementById('total-expenses').textContent = formatCurrency(summary.totalExpenses || 0);
+                    document.getElementById('total-drivers').textContent = formatCurrency(summary.totalDriverSalaries || 0);
+                    document.getElementById('net-profit').textContent = formatCurrency(summary.netProfit || 0);
+                    
+                    document.getElementById('stats-status').className = 'status success';
+                    document.getElementById('stats-status').textContent = '✅ تم تحميل البيانات بنجاح';
+                    
+                    log(`تم تحميل البيانات المالية:`, 'success');
+                    log(`إيرادات: ${formatCurrency(summary.totalRevenue || 0)}`);
+                    log(`مصروفات: ${formatCurrency(summary.totalExpenses || 0)}`);
+                    log(`رواتب: ${formatCurrency(summary.totalDriverSalaries || 0)}`);
+                    log(`صافي الربح: ${formatCurrency(summary.netProfit || 0)}`);
+                } else {
+                    throw new Error('تنسيق البيانات غير صحيح');
+                }
+            } catch (error) {
+                document.getElementById('stats-status').className = 'status error';
+                document.getElementById('stats-status').textContent = '❌ فشل في تحميل البيانات';
+                log('خطأ في تحميل البيانات المالية: ' + error.message, 'error');
+            }
+        }
+
+        async function refreshData() {
+            log('بدء عملية تحديث البيانات...');
+            const connected = await checkConnection();
+            if (connected) {
+                await loadFinancialData();
+                log('تم تحديث جميع البيانات بنجاح', 'success');
+            }
+        }
+
+        // Form submissions
+        document.getElementById('expense-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const expenseData = {
+                type: document.getElementById('expense-type').value,
+                amount: parseFloat(document.getElementById('expense-amount').value),
+                category: document.getElementById('expense-category').value,
+                date: document.getElementById('expense-date').value,
+                description: document.getElementById('expense-description').value,
+                paymentMethod: 'cash',
+                createdBy: 'admin'
+            };
+            
+            try {
+                log('جاري إضافة مصروف جديد...');
+                const response = await fetch('http://localhost:3001/api/expenses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(expenseData)
+                });
+                
+                if (response.ok) {
+                    log(`تم إضافة مصروف جديد: ${expenseData.type} بقيمة ${formatCurrency(expenseData.amount)}`, 'success');
+                    document.getElementById('expense-form').reset();
+                    document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+                    await loadFinancialData(); // Refresh data
+                } else {
+                    throw new Error('فشل في إضافة المصروف');
+                }
+            } catch (error) {
+                log('خطأ في إضافة المصروف: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('driver-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const driverData = {
+                driverName: document.getElementById('driver-name').value,
+                amount: parseFloat(document.getElementById('driver-amount').value),
+                hoursWorked: parseFloat(document.getElementById('driver-hours').value || 0),
+                ratePerHour: parseFloat(document.getElementById('driver-rate').value || 0),
+                date: document.getElementById('driver-date').value,
+                notes: document.getElementById('driver-notes').value,
+                paymentMethod: 'cash',
+                createdBy: 'admin'
+            };
+            
+            try {
+                log('جاري إضافة راتب سائق جديد...');
+                const response = await fetch('http://localhost:3001/api/driver-salaries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(driverData)
+                });
+                
+                if (response.ok) {
+                    log(`تم إضافة راتب السائق: ${driverData.driverName} بقيمة ${formatCurrency(driverData.amount)}`, 'success');
+                    document.getElementById('driver-form').reset();
+                    document.getElementById('driver-date').value = new Date().toISOString().split('T')[0];
+                    await loadFinancialData(); // Refresh data
+                } else {
+                    throw new Error('فشل في إضافة راتب السائق');
+                }
+            } catch (error) {
+                log('خطأ في إضافة راتب السائق: ' + error.message, 'error');
+            }
+        });
+
+        // Initialize
+        window.onload = function() {
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('expense-date').value = today;
+            document.getElementById('driver-date').value = today;
+            
+            log('تم تحميل النظام بنجاح');
+            refreshData();
+        };
+    </script>
+</body>
+</html>

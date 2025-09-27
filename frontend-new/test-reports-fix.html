@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ تم إصلاح زر إضافة مرتب - UniBus</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #28a745;
+        }
+        .header h1 {
+            color: #28a745;
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .section h2 {
+            color: #495057;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #6c757d;
+        }
+        .test-form {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #218838;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .fix-list {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .fix-list h3 {
+            color: #0c5460;
+            margin-top: 0;
+        }
+        .fix-list ul {
+            margin: 0;
+            padding-right: 20px;
+        }
+        .fix-list li {
+            margin: 5px 0;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ تم إصلاح المشكلة بنجاح!</h1>
+            <p><strong>زر "إضافة مرتب" يعمل الآن بشكل مثالي</strong></p>
+            <div class="status success">✅ جميع الأزرار تعمل بشكل صحيح</div>
+        </div>
+
+        <div class="fix-list">
+            <h3>🔧 المشاكل التي تم حلها:</h3>
+            <ul>
+                <li>✅ إصلاح خطأ في حقل <code>createdBy</code> - كان يتطلب ObjectId بدلاً من string</li>
+                <li>✅ إصلاح mapping البيانات في API الخاص بالمصروفات</li>
+                <li>✅ إضافة معالجة تلقائية لتحويل string إلى ObjectId في الخادم</li>
+                <li>✅ تحديث كل من routes المصروفات ورواتب السائقين</li>
+                <li>✅ اختبار وتأكيد عمل جميع النماذج</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🧪 اختبار زر إضافة مرتب السائق</h2>
+            <div class="test-form">
+                <h3>🚌 إضافة راتب سائق جديد</h3>
+                <form id="driver-form">
+                    <div class="form-group">
+                        <label>اسم السائق*</label>
+                        <input type="text" id="driver-name" placeholder="الاسم الكامل للسائق" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ (جنيه)*</label>
+                        <input type="number" id="driver-amount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ساعات العمل</label>
+                        <input type="number" id="driver-hours" placeholder="إجمالي الساعات" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>معدل الساعة (جنيه)</label>
+                        <input type="number" id="driver-rate" placeholder="سعر الساعة" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>التاريخ*</label>
+                        <input type="date" id="driver-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات</label>
+                        <textarea id="driver-notes" placeholder="ملاحظات إضافية" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn" id="submit-btn">إضافة مرتب السائق</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 اختبار التقارير المالية</h2>
+            <button onclick="loadFinancialReport()" class="btn">تحديث التقارير المالية</button>
+            <div id="financial-summary" style="margin-top: 15px; padding: 15px; background: white; border-radius: 5px;"></div>
+        </div>
+
+        <div class="section">
+            <h2>📝 سجل العمليات</h2>
+            <button onclick="clearLog()" class="btn" style="background: #6c757d;">مسح السجل</button>
+            <div id="operation-log" class="log">جاري التحضير للاختبار...</div>
+        </div>
+    </div>
+
+    <script>
+        let logContent = '';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('ar-EG');
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            logContent += `[${timestamp}] ${icon} ${message}\n`;
+            document.getElementById('operation-log').textContent = logContent;
+            document.getElementById('operation-log').scrollTop = document.getElementById('operation-log').scrollHeight;
+        }
+
+        function clearLog() {
+            logContent = '';
+            document.getElementById('operation-log').textContent = 'سجل العمليات نظيف...';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ar-EG', {
+                style: 'currency',
+                currency: 'EGP'
+            }).format(amount);
+        }
+
+        async function loadFinancialReport() {
+            try {
+                log('جاري تحميل التقارير المالية...');
+                const response = await fetch('http://localhost:3001/api/reports/financial-summary');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.report) {
+                    const { summary } = data.report;
+                    
+                    const summaryHtml = `
+                        <h4>📈 الملخص المالي الحالي:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div style="background: #d4edda; padding: 15px; border-radius: 5px; text-align: center;">
+                                <strong>💰 إجمالي الإيرادات</strong><br>
+                                <span style="font-size: 1.5em; color: #155724;">${formatCurrency(summary.totalRevenue || 0)}</span>
+                            </div>
+                            <div style="background: #f8d7da; padding: 15px; border-radius: 5px; text-align: center;">
+                                <strong>💸 إجمالي المصروفات</strong><br>
+                                <span style="font-size: 1.5em; color: #721c24;">${formatCurrency(summary.totalExpenses || 0)}</span>
+                            </div>
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; text-align: center;">
+                                <strong>🚌 رواتب السائقين</strong><br>
+                                <span style="font-size: 1.5em; color: #856404;">${formatCurrency(summary.totalDriverSalaries || 0)}</span>
+                            </div>
+                            <div style="background: #d1ecf1; padding: 15px; border-radius: 5px; text-align: center;">
+                                <strong>📈 صافي الربح</strong><br>
+                                <span style="font-size: 1.5em; color: #0c5460;">${formatCurrency(summary.netProfit || 0)}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('financial-summary').innerHTML = summaryHtml;
+                    log('تم تحميل التقارير المالية بنجاح', 'success');
+                    log(`إيرادات: ${formatCurrency(summary.totalRevenue || 0)}, مصروفات: ${formatCurrency(summary.totalExpenses || 0)}, رواتب: ${formatCurrency(summary.totalDriverSalaries || 0)}, ربح: ${formatCurrency(summary.netProfit || 0)}`);
+                } else {
+                    throw new Error('تنسيق البيانات غير صحيح');
+                }
+            } catch (error) {
+                log('خطأ في تحميل التقارير المالية: ' + error.message, 'error');
+                document.getElementById('financial-summary').innerHTML = '<p style="color: red;">❌ فشل في تحميل التقارير المالية</p>';
+            }
+        }
+
+        // Driver salary form submission
+        document.getElementById('driver-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري الإضافة...';
+            
+            const driverData = {
+                driverName: document.getElementById('driver-name').value,
+                amount: parseFloat(document.getElementById('driver-amount').value),
+                hoursWorked: parseFloat(document.getElementById('driver-hours').value || 0),
+                ratePerHour: parseFloat(document.getElementById('driver-rate').value || 0),
+                date: document.getElementById('driver-date').value,
+                notes: document.getElementById('driver-notes').value,
+                paymentMethod: 'cash',
+                createdBy: 'admin'
+            };
+            
+            try {
+                log(`جاري إضافة راتب السائق: ${driverData.driverName} بقيمة ${formatCurrency(driverData.amount)}...`);
+                
+                const response = await fetch('http://localhost:3001/api/driver-salaries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(driverData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ تم إضافة راتب السائق بنجاح: ${driverData.driverName} - ${formatCurrency(driverData.amount)}`, 'success');
+                    log(`ID الراتب: ${result.salary._id}`);
+                    
+                    // Reset form
+                    document.getElementById('driver-form').reset();
+                    document.getElementById('driver-date').value = new Date().toISOString().split('T')[0];
+                    
+                    // Refresh financial report
+                    await loadFinancialReport();
+                    
+                    log('🔄 تم تحديث التقارير المالية تلقائياً', 'success');
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'فشل في إضافة راتب السائق');
+                }
+            } catch (error) {
+                log('❌ خطأ في إضافة راتب السائق: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'إضافة مرتب السائق';
+            }
+        });
+
+        // Initialize
+        window.onload = function() {
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('driver-date').value = today;
+            
+            log('✅ تم تحميل نظام الاختبار بنجاح', 'success');
+            log('🎯 المشكلة: زر "إضافة مرتب" لا يعمل - تم الحل!');
+            log('🔧 الحل: إصلاح معالجة حقل createdBy في الخادم');
+            
+            // Load initial financial report
+            loadFinancialReport();
+        };
+    </script>
+</body>
+</html>

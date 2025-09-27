@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transportation System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1f2937;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .success {
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+        
+        .error {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+        }
+        
+        .loading {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+        
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        
+        .schedule-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 10px 0;
+        }
+        
+        .schedule-header {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .schedule-detail {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .maps-link {
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 Transportation System Test</h1>
+            <p>Test the new transportation management system with Google Maps integration</p>
+        </div>
+        
+        <!-- Backend API Tests -->
+        <div class="test-section">
+            <h2>🔧 Backend API Tests</h2>
+            <button onclick="testBackendConnection()">Test Backend Connection</button>
+            <button onclick="fetchTransportationData()">Fetch Transportation Data</button>
+            <button onclick="fetchActiveSchedules()">Fetch Active Schedules Only</button>
+            <div id="backend-result" class="test-result loading">Click buttons above to test backend connectivity...</div>
+        </div>
+        
+        <!-- Add New Schedule -->
+        <div class="test-section">
+            <h2>➕ Add New Transportation Schedule</h2>
+            <form id="addScheduleForm">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="form-group">
+                        <label>Schedule Name *</label>
+                        <input type="text" id="name" placeholder="Morning Route to Campus" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Departure Time *</label>
+                        <input type="time" id="time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Station Location *</label>
+                        <input type="text" id="location" placeholder="Downtown Central Station" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Google Maps Link</label>
+                        <input type="url" id="googleMapsLink" placeholder="https://maps.google.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label>Parking Area *</label>
+                        <input type="text" id="parking" placeholder="Main Parking Lot A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Bus Capacity *</label>
+                        <input type="number" id="capacity" placeholder="150" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="status">
+                            <option value="Active">🟢 Active</option>
+                            <option value="Inactive">🔴 Inactive</option>
+                            <option value="Maintenance">🔧 Under Maintenance</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Operating Days</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
+                        <label><input type="checkbox" name="days" value="Sunday"> Sunday</label>
+                        <label><input type="checkbox" name="days" value="Monday"> Monday</label>
+                        <label><input type="checkbox" name="days" value="Tuesday"> Tuesday</label>
+                        <label><input type="checkbox" name="days" value="Wednesday"> Wednesday</label>
+                        <label><input type="checkbox" name="days" value="Thursday"> Thursday</label>
+                        <label><input type="checkbox" name="days" value="Friday"> Friday</label>
+                        <label><input type="checkbox" name="days" value="Saturday"> Saturday</label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Additional Notes</label>
+                    <textarea id="description" rows="3" placeholder="Any additional information about this route..."></textarea>
+                </div>
+                
+                <button type="submit">Add Transportation Schedule</button>
+                <button type="button" onclick="clearForm()">Clear Form</button>
+            </form>
+            <div id="add-result" class="test-result loading">Fill the form and submit to add a new schedule...</div>
+        </div>
+        
+        <!-- Current Schedules -->
+        <div class="test-section">
+            <h2>📋 Current Transportation Schedules</h2>
+            <button onclick="displaySchedules()">Refresh Schedule List</button>
+            <div id="schedules-container">
+                <div id="schedules-result" class="test-result loading">Click "Refresh Schedule List" to load current schedules...</div>
+            </div>
+        </div>
+        
+        <!-- Student Portal Preview -->
+        <div class="test-section">
+            <h2>👨‍🎓 Student Portal Preview</h2>
+            <button onclick="simulateStudentView()">Simulate Student View</button>
+            <div id="student-result" class="test-result loading">Click above to simulate how students will see the transportation data...</div>
+        </div>
+    </div>
+
+    <script>
+        // Test backend connection
+        async function testBackendConnection() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.className = 'test-result loading';
+            resultDiv.textContent = 'Testing backend connection...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.textContent = `✅ Backend Connected Successfully!\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = `❌ Backend Connection Failed\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ Backend Connection Error\n${error.message}`;
+            }
+        }
+        
+        // Fetch transportation data
+        async function fetchTransportationData() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.className = 'test-result loading';
+            resultDiv.textContent = 'Fetching transportation data...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/transportation');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.textContent = `✅ Transportation Data Fetched!\nCount: ${data.count || data.transportation?.length || 0} schedules\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = `❌ Failed to Fetch Transportation Data\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ Transportation Data Fetch Error\n${error.message}`;
+            }
+        }
+        
+        // Fetch active schedules only
+        async function fetchActiveSchedules() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.className = 'test-result loading';
+            resultDiv.textContent = 'Fetching active schedules...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/transportation/active/schedules');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.textContent = `✅ Active Schedules Fetched!\nCount: ${data.count || data.transportation?.length || 0} active schedules\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = `❌ Failed to Fetch Active Schedules\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ Active Schedules Fetch Error\n${error.message}`;
+            }
+        }
+        
+        // Add new schedule
+        document.getElementById('addScheduleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('add-result');
+            resultDiv.className = 'test-result loading';
+            resultDiv.textContent = 'Adding new transportation schedule...';
+            
+            // Collect form data
+            const formData = {
+                name: document.getElementById('name').value,
+                time: document.getElementById('time').value,
+                location: document.getElementById('location').value,
+                googleMapsLink: document.getElementById('googleMapsLink').value,
+                parking: document.getElementById('parking').value,
+                capacity: parseInt(document.getElementById('capacity').value),
+                status: document.getElementById('status').value,
+                description: document.getElementById('description').value,
+                days: Array.from(document.querySelectorAll('input[name="days"]:checked')).map(cb => cb.value)
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/transportation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.textContent = `✅ Transportation Schedule Added Successfully!\n${JSON.stringify(data, null, 2)}`;
+                    clearForm();
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = `❌ Failed to Add Schedule\nStatus: ${response.status}\nMessage: ${data.message || data.error}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ Add Schedule Error\n${error.message}`;
+            }
+        });
+        
+        // Clear form
+        function clearForm() {
+            document.getElementById('addScheduleForm').reset();
+        }
+        
+        // Display schedules
+        async function displaySchedules() {
+            const resultDiv = document.getElementById('schedules-result');
+            resultDiv.className = 'test-result loading';
+            resultDiv.textContent = 'Loading transportation schedules...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/transportation');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const schedules = data.transportation || [];
+                    const container = document.getElementById('schedules-container');
+                    
+                    if (schedules.length === 0) {
+                        resultDiv.className = 'test-result error';
+                        resultDiv.textContent = '📭 No transportation schedules found. Add some schedules using the form above.';
+                    } else {
+                        resultDiv.className = 'test-result success';
+                        resultDiv.textContent = `✅ Found ${schedules.length} transportation schedule(s)`;
+                        
+                        // Create schedule cards
+                        const cardsHTML = schedules.map(schedule => `
+                            <div class="schedule-card">
+                                <div class="schedule-header">🚌 ${schedule.name}</div>
+                                <div class="schedule-detail">🕒 <span>Departure: ${schedule.time}</span></div>
+                                <div class="schedule-detail">📍 <span>Location: ${schedule.location}</span></div>
+                                ${schedule.googleMapsLink ? `<div class="schedule-detail">🗺️ <span class="maps-link" onclick="window.open('${schedule.googleMapsLink}', '_blank')">View on Google Maps</span></div>` : ''}
+                                <div class="schedule-detail">🅿️ <span>Parking: ${schedule.parking}</span></div>
+                                <div class="schedule-detail">👥 <span>Capacity: ${schedule.capacity} students</span></div>
+                                ${schedule.days && schedule.days.length > 0 ? `<div class="schedule-detail">📅 <span>Days: ${schedule.days.join(', ')}</span></div>` : ''}
+                                <div class="schedule-detail">
+                                    <span>${schedule.status === 'Active' ? '🟢' : schedule.status === 'Maintenance' ? '🔧' : '🔴'}</span>
+                                    <span>Status: ${schedule.status}</span>
+                                </div>
+                                ${schedule.description ? `<div class="schedule-detail" style="background: #f3f4f6; padding: 8px; border-radius: 4px; margin-top: 8px;">📝 <span>${schedule.description}</span></div>` : ''}
+                            </div>
+                        `).join('');
+                        
+                        container.innerHTML = resultDiv.outerHTML + cardsHTML;
+                    }
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = `❌ Failed to Load Schedules\nMessage: ${data.message || 'Unknown error'}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ Load Schedules Error\n${error.message}`;
+            }
+        }
+        
+        // Simulate student view
+        async function simulateStudentView() {
+            const resultDiv = document.getElementById('student-result');
+            resultDiv.className = 'test-result loading';
+            resultDiv.textContent = 'Loading student view of transportation schedules...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/transportation/active/schedules');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const schedules = data.transportation || [];
+                    
+                    if (schedules.length === 0) {
+                        resultDiv.className = 'test-result error';
+                        resultDiv.textContent = '📭 Students will see: "No transportation schedules available"';
+                    } else {
+                        resultDiv.className = 'test-result success';
+                        resultDiv.textContent = `✅ Students will see ${schedules.length} active schedule(s):
+
+${schedules.map(schedule => `
+🚌 ${schedule.name}
+🕒 Time: ${schedule.time}
+📍 Location: ${schedule.location}
+${schedule.googleMapsLink ? '🗺️ Google Maps: Available' : '🗺️ Google Maps: Not available'}
+🅿️ Parking: ${schedule.parking}
+👥 Capacity: ${schedule.capacity} students
+${schedule.days && schedule.days.length > 0 ? `📅 Days: ${schedule.days.join(', ')}` : ''}
+${schedule.description ? `📝 Notes: ${schedule.description}` : ''}
+`).join('\n' + '='.repeat(50) + '\n')}`;
+                    }
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = `❌ Student View Error\nMessage: ${data.message || 'Unknown error'}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ Student View Error\n${error.message}`;
+            }
+        }
+        
+        // Auto-load initial data
+        window.addEventListener('load', function() {
+            setTimeout(testBackendConnection, 1000);
+        });
+    </script>
+</body>
+</html>
