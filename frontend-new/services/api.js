@@ -1,287 +1,147 @@
-// src/services/api.js
-import axios from 'axios';
+// Simple API service without axios dependency
 
-// Create axios instance with base configuration
-const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname === 'unibus.online' ? 'https://unibus.online:3001' : 'http://localhost:3001'),
-    timeout: 10000,
+// Base URL configuration
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname === 'unibus.online') {
+    return 'https://unibus.online:3001';
+  }
+  return 'http://localhost:3001';
+};
+
+// Helper function for API calls
+const apiRequest = async (endpoint, options = {}) => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  
+  const defaultOptions = {
     headers: {
-        'Content-Type': 'application/json',
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` })
     },
-});
-
-// Request interceptor to add auth token
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
+  };
+  
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+    headers: {
+      ...defaultOptions.headers,
+      ...options.headers,
     },
-    (error) => {
-        return Promise.reject(error);
+  };
+  
+  try {
+    const response = await fetch(`${getBaseUrl()}${endpoint}`, mergedOptions);
+    
+    if (response.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/auth';
+      }
     }
-);
+    
+    const data = await response.json();
+    return { ...data, status: response.status, ok: response.ok };
+  } catch (error) {
+    console.error('API Request Error:', error);
+    throw error;
+  }
+};
 
-// Response interceptor to handle common errors
-api.interceptors.response.use(
-    (response) => {
-        return response.data;
-    },
-    (error) => {
-        if (error.response?.status === 401) {
-            // Token expired or invalid
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error.response?.data || error.message);
-    }
-);
-
-// Authentication API
+// Auth API
 export const authAPI = {
-    login: async (credentials) => {
-        try {
-            const response = await api.post('/api/auth/login', credentials);
-            if (response.success && response.token) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-                if (response.student) {
-                    localStorage.setItem('student', JSON.stringify(response.student));
-                }
-                return response;
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            throw error;
-        }
-        throw new Error('Login failed');
-    },
+  login: async (credentials) => {
+    return apiRequest('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    });
+  },
 
-    register: async (userData) => {
-        try {
-            const response = await api.post('/api/auth/register', userData);
-            if (response.success && response.token) {
-                localStorage.setItem('token', response.token);
-                localStorage.setItem('user', JSON.stringify(response.user));
-                if (response.student) {
-                    localStorage.setItem('student', JSON.stringify(response.student));
-                }
-                return response;
-            }
-            throw new Error(response.message || 'Registration failed');
-        } catch (error) {
-            console.error('Registration error:', error);
-            throw error;
-        }
-    },
+  register: async (userData) => {
+    return apiRequest('/api/auth/register', {
+      method: 'POST', 
+      body: JSON.stringify(userData)
+    });
+  },
 
-    logout: async () => {
-        try {
-            await api.post('/auth/logout');
-        } finally {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('student');
-        }
-    },
-
-    getCurrentUser: async () => {
-        return await api.get('/auth/me');
-    },
-
-    changePassword: async (passwordData) => {
-        return await api.put('/auth/change-password', passwordData);
-    }
+  checkUser: async (email) => {
+    return apiRequest(`/api/auth/check-user?email=${email}`);
+  }
 };
 
-// Student API
+// Student API  
 export const studentAPI = {
-    getProfile: async () => {
-        return await api.get('/api/students/data');
-    },
+  getProfile: async (email) => {
+    return apiRequest(`/api/students/data?email=${email}`);
+  },
 
-    updateProfile: async (profileData) => {
-        return await api.put('/api/students/data', profileData);
-    },
+  updateProfile: async (studentData) => {
+    return apiRequest('/api/students/data', {
+      method: 'POST',
+      body: JSON.stringify(studentData)
+    });
+  },
 
-    uploadProfilePhoto: async (file) => {
-        const formData = new FormData();
-        formData.append('profilePhoto', file);
-        
-        return await api.post('/api/students/profile/photo', formData, {
-            timeout: 30000, // 30 second timeout for file uploads
-            headers: {
-                // Don't set Content-Type - let browser set it with boundary
-            },
-        });
-    },
+  generateQRCode: async (email) => {
+    return apiRequest(`/api/students/generate-qr?email=${email}`);
+  },
 
-    generateQRCode: async () => {
-        return await api.post('/api/students/generate-qr');
-    },
-
-    getAttendance: async (params = {}) => {
-        return await api.get('/api/students/attendance', { params });
-    },
-
-    submitSupportTicket: async (ticketData) => {
-        return await api.post('/api/students/support', ticketData);
-    },
-
-    getSupportTickets: async () => {
-        return await api.get('/api/students/support');
-    },
-
-    // New methods for student registration
-    registerStudent: async (studentData) => {
-        return await api.post('/api/students/register', studentData);
-    },
-
-    getStudentProfile: async (studentId) => {
-        return await api.get(`/api/students/${studentId}`);
-    }
-};
-
-// Subscription API
-export const subscriptionAPI = {
-    getMySubscription: async () => {
-        return await api.get('/subscriptions/my-subscription');
-    },
-
-    requestSubscription: async (subscriptionData) => {
-        return await api.post('/subscriptions/request', subscriptionData);
-    },
-
-    getApplications: async (params = {}) => {
-        return await api.get('/subscriptions/applications', { params });
-    },
-
-    confirmSubscription: async (subscriptionId, confirmationData) => {
-        return await api.put(`/subscriptions/confirm/${subscriptionId}`, confirmationData);
-    },
-
-    cancelSubscription: async (subscriptionId) => {
-        return await api.put(`/subscriptions/cancel/${subscriptionId}`);
-    },
-
-    processPayment: async (subscriptionId, paymentData) => {
-        return await api.post(`/subscriptions/payment/${subscriptionId}`, paymentData);
-    },
-
-    getStats: async () => {
-        return await api.get('/subscriptions/stats');
-    }
-};
-
-// Attendance API
-export const attendanceAPI = {
-    scanQR: async (qrData) => {
-        return await api.post('/api/shifts/scan', qrData);
-    },
-
-    getRecords: async (params = {}) => {
-        return await api.get('/api/attendance/all-records', { params });
-    },
-
-    getTodayAttendance: async () => {
-        return await api.get('/api/attendance/today');
-    },
-
-    markAbsent: async (attendanceData) => {
-        return await api.post('/api/attendance/mark-absent', attendanceData);
-    },
-
-    updateRecord: async (attendanceId, updateData) => {
-        return await api.put(`/api/attendance/update/${attendanceId}`, updateData);
-    },
-
-    getStats: async (params = {}) => {
-        return await api.get('/api/attendance/stats', { params });
-    },
-
-    // New methods for attendance tracking
-    getStudentAttendanceCount: async (studentEmail) => {
-        return await api.get(`/api/attendance/student-count/${studentEmail}`);
-    },
-
-    updateAttendanceCount: async (studentEmail, newCount) => {
-        return await api.put(`/api/attendance/update-count/${studentEmail}`, { count: newCount });
-    }
-};
-
-// Transportation API
-export const transportationAPI = {
-    getSchedule: async () => {
-        return await api.get('/transportation/schedule');
-    },
-
-    updateSchedule: async (scheduleData) => {
-        return await api.put('/transportation/schedule', scheduleData);
-    },
-
-    setReturnSchedule: async (returnData) => {
-        return await api.post('/transportation/return-schedule', returnData);
-    }
+  getAttendance: async (email) => {
+    return apiRequest(`/api/students/attendance?email=${email}`);
+  }
 };
 
 // Admin API
 export const adminAPI = {
-    getDashboardStats: async () => {
-        return await api.get('/api/admin/dashboard/stats');
-    },
+  getDashboardStats: async () => {
+    return apiRequest('/api/admin/dashboard/stats');
+  },
 
-    getStudents: async (params = {}) => {
-        return await api.get('/api/admin/students', { params });
-    },
+  getStudents: async () => {
+    return apiRequest('/api/admin/students');
+  },
 
-    getStudentDetails: async (studentId) => {
-        return await api.get(`/api/admin/students/${studentId}`);
-    },
-
-    updateStudentStatus: async (studentId, statusData) => {
-        return await api.put(`/api/admin/students/${studentId}/status`, statusData);
-    },
-
-    getSupportTickets: async (params = {}) => {
-        return await api.get('/api/admin/support-tickets', { params });
-    },
-
-    updateSupportTicket: async (ticketId, updateData) => {
-        return await api.put(`/api/admin/support-tickets/${ticketId}`, updateData);
-    },
-
-    generateReport: async (reportType, params = {}) => {
-        return await api.get(`/api/admin/reports/${reportType}`, { params });
-    },
-
-    // New methods for student search with attendance
-    searchStudents: async (searchTerm = '', page = 1, limit = 20) => {
-        return await api.get('/api/admin/students', { 
-            params: { search: searchTerm, page, limit } 
-        });
-    },
-
-    getStudentAttendance: async (studentId) => {
-        return await api.get(`/api/admin/students/${studentId}/attendance`);
-    }
+  searchStudents: async (query) => {
+    return apiRequest(`/api/admin/students/search?q=${query}`);
+  }
 };
 
-// Utility functions
-export const getStoredUser = () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+// Attendance API
+export const attendanceAPI = {
+  scanQR: async (qrData) => {
+    return apiRequest('/api/attendance/scan', {
+      method: 'POST',
+      body: JSON.stringify(qrData)
+    });
+  },
+
+  getRecords: async () => {
+    return apiRequest('/api/attendance/records');
+  },
+
+  getTodayAttendance: async () => {
+    return apiRequest('/api/attendance/today');
+  }
 };
 
-export const getStoredStudent = () => {
-    const student = localStorage.getItem('student');
-    return student ? JSON.parse(student) : null;
+// Transportation API  
+export const transportationAPI = {
+  getSchedule: async () => {
+    return apiRequest('/api/transportation/schedule');
+  },
+
+  updateSchedule: async (scheduleData) => {
+    return apiRequest('/api/transportation/schedule', {
+      method: 'PUT',
+      body: JSON.stringify(scheduleData)
+    });
+  }
 };
 
-export const isAuthenticated = () => {
-    return !!localStorage.getItem('token');
+// Default export
+export default {
+  authAPI,
+  studentAPI, 
+  adminAPI,
+  attendanceAPI,
+  transportationAPI
 };
-
-export default api;

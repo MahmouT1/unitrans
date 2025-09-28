@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import WorkingQRScannerFixed from '../../../components/WorkingQRScannerFixed';
+import AccurateQRScanner from '../../../components/AccurateQRScanner';
 import '../../../components/admin/EnhancedSupervisorDashboard.css';
 
 const EnhancedSupervisorDashboardContent = ({ user, onLogout }) => {
@@ -166,7 +166,7 @@ const EnhancedSupervisorDashboardContent = ({ user, onLogout }) => {
             <h2>QR Code Scanner</h2>
             <p>Scan student QR codes. The system handles multiple supervisors automatically.</p>
             
-            <WorkingQRScannerFixed
+            <AccurateQRScanner
               onScanSuccess={handleScanSuccess}
               onScanError={handleScanError}
               supervisorId={user?.id || 'supervisor-001'}
