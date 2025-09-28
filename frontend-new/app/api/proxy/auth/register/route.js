@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    console.log('🔄 Proxy: Register request received');
     const body = await request.json();
+    console.log('📥 Proxy: Request body:', body);
     
-    // Forward to backend
+    // Forward to backend server (localhost since we're on the same machine)
     const backendUrl = 'http://localhost:3001';
-    const response = await fetch(`${backendUrl}/api/auth/register`, {
+    const targetUrl = `${backendUrl}/api/auth/register`;
+    
+    console.log('🎯 Proxy: Forwarding to:', targetUrl);
+    
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -15,16 +21,33 @@ export async function POST(request) {
     });
 
     const data = await response.json();
+    console.log('📤 Proxy: Backend response:', data);
     
     return NextResponse.json(data, {
-      status: response.status
+      status: response.status,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
     });
 
   } catch (error) {
-    console.error('Register proxy error:', error);
+    console.error('❌ Proxy: Register error:', error);
     return NextResponse.json({
       success: false,
-      message: 'Connection error'
+      message: 'Proxy connection error'
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS(request) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }

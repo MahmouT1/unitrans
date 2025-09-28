@@ -59,9 +59,8 @@ export default function UnifiedAuth() {
     }
 
     try {
-      // Use backend directly since proxy routes aren't working
-      const backendUrl = 'https://unibus.online:3001';
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      // Use proxy routes to avoid CSP issues
+      const endpoint = isLogin ? '/api/proxy/auth/login' : '/api/proxy/auth/register';
       const body = isLogin 
         ? { email: formData.email, password: formData.password }
         : { 
@@ -71,10 +70,10 @@ export default function UnifiedAuth() {
             role: 'student'
           };
 
-      console.log('API Call:', 'POST', backendUrl + endpoint);
+      console.log('API Call:', 'POST', endpoint);
       console.log('Request Data:', body);
 
-      const response = await fetch(backendUrl + endpoint, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
