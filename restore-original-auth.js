@@ -1,4 +1,9 @@
-'use client';
+// استعادة صفحة Auth الأصلية مع إصلاح API فقط
+const fs = require('fs');
+const path = require('path');
+
+// الحصول على التصميم الأصلي لصفحة Auth من السيرفر المحلي
+const originalAuthPage = `'use client';
 
 import { useState, useEffect } from 'react';
 
@@ -91,7 +96,7 @@ export default function UnifiedAuth() {
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isAuthenticated', 'true');
 
-        setMessage(`✅ ${isLogin ? 'Login' : 'Registration'} successful! Redirecting...`);
+        setMessage(\`✅ \${isLogin ? 'Login' : 'Registration'} successful! Redirecting...\`);
         
         // Redirect based on role
         setTimeout(() => {
@@ -366,7 +371,7 @@ export default function UnifiedAuth() {
               padding: '16px',
               borderRadius: '12px',
               backgroundColor: message.includes('✅') ? '#dcfce7' : '#fef2f2',
-              border: `2px solid ${message.includes('✅') ? '#bbf7d0' : '#fecaca'}`,
+              border: \`2px solid \${message.includes('✅') ? '#bbf7d0' : '#fecaca'}\`,
               textAlign: 'center'
             }}>
               <p style={{
@@ -383,4 +388,100 @@ export default function UnifiedAuth() {
       </div>
     </div>
   );
+}`;
+
+// إصلاح API routes بدون تغيير الصفحات
+const fixedLoginRoute = `import { NextResponse } from 'next/server';
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    
+    // Forward to backend with HTTPS
+    const backendUrl = 'https://unibus.online:3001';
+    const response = await fetch(\`\${backendUrl}/api/auth/login\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, {
+      status: response.status
+    });
+
+  } catch (error) {
+    console.error('Login proxy error:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Connection error'
+    }, { status: 500 });
+  }
+}`;
+
+const fixedRegisterRoute = `import { NextResponse } from 'next/server';
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    
+    // Forward to backend with HTTPS
+    const backendUrl = 'https://unibus.online:3001';
+    const response = await fetch(\`\${backendUrl}/api/auth/register\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, {
+      status: response.status
+    });
+
+  } catch (error) {
+    console.error('Register proxy error:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Connection error'
+    }, { status: 500 });
+  }
+}`;
+
+function createFiles() {
+    console.log('🔧 استعادة صفحة Auth الأصلية مع إصلاح API فقط...\n');
+    
+    // إنشاء صفحة Auth الأصلية
+    const authPath = 'frontend-new/app/auth/page.js';
+    fs.writeFileSync(authPath, originalAuthPage);
+    console.log('✅ تم استعادة صفحة Auth الأصلية');
+    
+    // إصلاح Login route
+    const loginPath = 'frontend-new/app/api/proxy/auth/login/route.js';
+    fs.writeFileSync(loginPath, fixedLoginRoute);
+    console.log('✅ تم إصلاح Login API route');
+    
+    // إصلاح Register route  
+    const registerPath = 'frontend-new/app/api/proxy/auth/register/route.js';
+    fs.writeFileSync(registerPath, fixedRegisterRoute);
+    console.log('✅ تم إصلاح Register API route');
+    
+    console.log('\n🎯 تم الانتهاء من الإصلاحات:');
+    console.log('  📄 صفحة Auth: استعادة التصميم الأصلي');
+    console.log('  🔗 API Routes: إصلاح الاتصال بـ Backend');
+    console.log('  🚀 التسجيل: يجب أن يعمل الآن بشكل طبيعي');
+    
+    console.log('\n📋 الخطوات التالية:');
+    console.log('  1. git add .');
+    console.log('  2. git commit -m "استعادة صفحة Auth الأصلية مع إصلاح API"');
+    console.log('  3. git push origin main');
+    console.log('  4. على السيرفر: git pull origin main');
+    console.log('  5. pm2 restart unitrans-frontend');
 }
+
+createFiles();
