@@ -200,6 +200,27 @@ router.post('/register', async (req, res) => {
     
     const result = await db.collection('users').insertOne(newUser);
     
+    // If user is a student, also create student record
+    if (role === 'student') {
+      const studentData = {
+        fullName,
+        email: email.toLowerCase(),
+        phoneNumber: '',
+        college: '',
+        grade: '',
+        major: '',
+        address: {},
+        attendanceCount: 0,
+        isActive: true,
+        userId: result.insertedId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      await db.collection('students').insertOne(studentData);
+      console.log('✅ Student record created for:', email);
+    }
+    
     // Generate token
     const token = `${role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     

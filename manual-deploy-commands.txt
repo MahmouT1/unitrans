@@ -1,0 +1,28 @@
+📋 أوامر النشر اليدوي على سيرفر الدومين:
+
+1️⃣ سحب آخر التحديثات:
+ssh root@unibus.online "cd /var/www/unitrans && git pull origin main"
+
+2️⃣ تثبيت المكتبات الجديدة:
+ssh root@unibus.online "cd /var/www/unitrans/backend-new && npm install qrcode"
+
+3️⃣ إعادة تشغيل Backend:
+ssh root@unibus.online "pm2 restart unitrans-backend"
+
+4️⃣ بناء Frontend:
+ssh root@unibus.online "cd /var/www/unitrans/frontend-new && rm -rf .next && npm run build"
+
+5️⃣ إعادة تشغيل Frontend:
+ssh root@unibus.online "pm2 restart unitrans-frontend"
+
+6️⃣ فحص الحالة:
+ssh root@unibus.online "pm2 status"
+
+7️⃣ اختبار الـ APIs:
+ssh root@unibus.online "curl -X GET https://unibus.online:3001/health"
+
+🎯 الميزات الجديدة التي ستعمل:
+✅ تسجيل طلاب جديد مع QR Code تلقائي
+✅ تتبع عدد أيام الحضور تلقائياً
+✅ عرض بيانات الحضور في صفحة البحث
+✅ APIs محسنة للطلاب والحضور

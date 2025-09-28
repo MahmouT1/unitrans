@@ -7,7 +7,7 @@ export async function POST(request) {
     console.log('🔄 Proxying login request to backend...');
     
     // Forward request to backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://unibus.online:3001';
     const backendResponse = await fetch(`${backendUrl}/api/auth/login`, {
       method: 'POST',
       headers: {
