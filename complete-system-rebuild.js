@@ -1,4 +1,204 @@
-'use client';
+// إعادة بناء النظام بالكامل كما كان يعمل على السيرفر المحلي
+const fs = require('fs');
+
+console.log('🔧 إعادة بناء النظام بالكامل...\n');
+
+// 1. إعادة إنشاء config/database.js للـ Backend
+const databaseConfig = `const { MongoClient } = require('mongodb');
+require('dotenv').config();
+
+let db;
+let client;
+
+async function connectDB() {
+  if (db) {
+    return db;
+  }
+
+  try {
+    client = new MongoClient(process.env.MONGODB_URI || 'mongodb://localhost:27017');
+    await client.connect();
+    db = client.db(process.env.MONGODB_DB_NAME || 'student_portal');
+    console.log('✅ Connected to MongoDB:', process.env.MONGODB_DB_NAME || 'student_portal');
+    return db;
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    throw error;
+  }
+}
+
+module.exports = connectDB;`;
+
+// 2. إعادة إنشاء auth.js للـ Backend (مبسط ويعمل)
+const authRoutes = `const express = require('express');
+const router = express.Router();
+const connectDB = require('../config/database');
+
+// Login route
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    console.log('🔍 Login attempt:', email);
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    const db = await connectDB();
+    
+    // البحث في users collection أولاً
+    let user = await db.collection('users').findOne({ 
+      email: email.toLowerCase() 
+    });
+
+    if (!user) {
+      console.log('❌ User not found:', email);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // فحص كلمة المرور (بسيط للآن)
+    if (user.password !== password) {
+      console.log('❌ Invalid password for:', email);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    console.log('✅ Login successful:', email, 'Role:', user.role);
+
+    // إنشاء token
+    const token = 'unibus-' + Date.now() + '-' + (user.role || 'student');
+
+    // تحديد صفحة التوجيه حسب الدور
+    let redirectUrl = '/student/portal';
+    if (user.role === 'admin') {
+      redirectUrl = '/admin/dashboard';
+    } else if (user.role === 'supervisor') {
+      redirectUrl = '/admin/supervisor-dashboard';
+    }
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id?.toString() || Date.now().toString(),
+        email: user.email,
+        role: user.role || 'student',
+        fullName: user.fullName || user.name || 'User',
+        isActive: user.isActive !== false
+      },
+      redirectUrl
+    });
+
+  } catch (error) {
+    console.error('💥 Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error occurred'
+    });
+  }
+});
+
+// Register route
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password, fullName, role = 'student' } = req.body;
+    
+    console.log('📝 Registration attempt:', email);
+    
+    if (!email || !password || !fullName) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
+    }
+
+    const db = await connectDB();
+    
+    // فحص إذا كان المستخدم موجود
+    const existingUser = await db.collection('users').findOne({
+      email: email.toLowerCase()
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User already exists'
+      });
+    }
+
+    // إنشاء مستخدم جديد
+    const newUser = {
+      email: email.toLowerCase(),
+      password,
+      fullName,
+      role,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await db.collection('users').insertOne(newUser);
+
+    // إذا كان طالب، أنشئ سجل في students collection
+    if (role === 'student') {
+      const studentData = {
+        fullName,
+        email: email.toLowerCase(),
+        phoneNumber: '',
+        college: '',
+        grade: '',
+        major: '',
+        address: {},
+        attendanceCount: 0,
+        isActive: true,
+        userId: result.insertedId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      await db.collection('students').insertOne(studentData);
+      console.log('✅ Student record created for:', email);
+    }
+
+    console.log('✅ Registration successful:', email);
+
+    const token = 'unibus-' + Date.now() + '-' + role;
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      token,
+      user: {
+        id: result.insertedId,
+        email: newUser.email,
+        role: newUser.role,
+        fullName: newUser.fullName,
+        isActive: true
+      }
+    });
+
+  } catch (error) {
+    console.error('💥 Registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error occurred'
+    });
+  }
+});
+
+module.exports = router;`;
+
+// 3. إعادة إنشاء صفحة Auth الأصلية بالضبط
+const originalAuthPage = `'use client';
 
 import { useState, useEffect } from 'react';
 import { apiCall, getApiUrl } from '../../config/api';
@@ -87,7 +287,7 @@ export default function UnifiedAuth() {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         localStorage.setItem('isAuthenticated', 'true');
 
-        setMessage(`✅ ${isLogin ? 'Login' : 'Registration'} successful! Redirecting...`);
+        setMessage(\`✅ \${isLogin ? 'Login' : 'Registration'} successful! Redirecting...\`);
         
         // Redirect based on role
         setTimeout(() => {
@@ -362,7 +562,7 @@ export default function UnifiedAuth() {
               padding: '16px',
               borderRadius: '12px',
               backgroundColor: message.includes('✅') ? '#dcfce7' : '#fef2f2',
-              border: `2px solid ${message.includes('✅') ? '#bbf7d0' : '#fecaca'}`,
+              border: \`2px solid \${message.includes('✅') ? '#bbf7d0' : '#fecaca'}\`,
               textAlign: 'center'
             }}>
               <p style={{
@@ -379,4 +579,109 @@ export default function UnifiedAuth() {
       </div>
     </div>
   );
+}`;
+
+// 4. إنشاء proxy routes للـ Auth
+const loginProxyRoute = `import { NextResponse } from 'next/server';
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    
+    // Forward to backend
+    const backendUrl = 'http://localhost:3001';
+    const response = await fetch(\`\${backendUrl}/api/auth/login\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, {
+      status: response.status
+    });
+
+  } catch (error) {
+    console.error('Login proxy error:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Connection error'
+    }, { status: 500 });
+  }
+}`;
+
+const registerProxyRoute = `import { NextResponse } from 'next/server';
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    
+    // Forward to backend
+    const backendUrl = 'http://localhost:3001';
+    const response = await fetch(\`\${backendUrl}/api/auth/register\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, {
+      status: response.status
+    });
+
+  } catch (error) {
+    console.error('Register proxy error:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Connection error'
+    }, { status: 500 });
+  }
+}`;
+
+function createFiles() {
+    console.log('📁 إنشاء الملفات...\n');
+    
+    // Backend files
+    if (!fs.existsSync('backend-new/config')) {
+        fs.mkdirSync('backend-new/config', { recursive: true });
+    }
+    
+    fs.writeFileSync('backend-new/config/database.js', databaseConfig);
+    console.log('✅ تم إنشاء backend-new/config/database.js');
+    
+    fs.writeFileSync('backend-new/routes/auth.js', authRoutes);
+    console.log('✅ تم إنشاء backend-new/routes/auth.js');
+    
+    // Frontend files
+    fs.writeFileSync('frontend-new/app/auth/page.js', originalAuthPage);
+    console.log('✅ تم إنشاء frontend-new/app/auth/page.js');
+    
+    // Proxy routes
+    if (!fs.existsSync('frontend-new/app/api/proxy/auth/login')) {
+        fs.mkdirSync('frontend-new/app/api/proxy/auth/login', { recursive: true });
+    }
+    if (!fs.existsSync('frontend-new/app/api/proxy/auth/register')) {
+        fs.mkdirSync('frontend-new/app/api/proxy/auth/register', { recursive: true });
+    }
+    
+    fs.writeFileSync('frontend-new/app/api/proxy/auth/login/route.js', loginProxyRoute);
+    console.log('✅ تم إنشاء frontend-new/app/api/proxy/auth/login/route.js');
+    
+    fs.writeFileSync('frontend-new/app/api/proxy/auth/register/route.js', registerProxyRoute);
+    console.log('✅ تم إنشاء frontend-new/app/api/proxy/auth/register/route.js');
+    
+    console.log('\n🎯 تم إنشاء جميع الملفات بنجاح!');
+    console.log('\n📋 الخطوات التالية:');
+    console.log('1. git add .');
+    console.log('2. git commit -m "Rebuild system exactly as local server"');
+    console.log('3. git push origin main');
+    console.log('4. على السيرفر: تشغيل النشر');
 }
+
+createFiles();

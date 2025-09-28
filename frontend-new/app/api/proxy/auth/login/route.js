@@ -4,8 +4,8 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Forward to backend with HTTPS
-    const backendUrl = 'https://unibus.online:3001';
+    // Forward to backend
+    const backendUrl = 'http://localhost:3001';
     const response = await fetch(`${backendUrl}/api/auth/login`, {
       method: 'POST',
       headers: {

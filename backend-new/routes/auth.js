@@ -1,206 +1,123 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
-const bcrypt = require('bcryptjs');
 const router = express.Router();
+const connectDB = require('../config/database');
 
-// Login endpoint
+// Login route
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
     
-    console.log('🔐 Backend login attempt:', { email, role });
+    console.log('🔍 Login attempt:', email);
     
-    if (!email || !password || !role) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email, password, and role are required'
+        message: 'Email and password are required'
       });
     }
 
-    // Use existing database connection or create new one
-    const db = req.app.locals.db;
-    if (!db) {
-      return res.status(500).json({
-        success: false,
-        message: 'Database connection not available'
-      });
-    }
+    const db = await connectDB();
     
-    console.log('📡 Database connected');
-    
-    // Find user by email first (ignore role parameter)
-    const user = await db.collection('users').findOne({
-      email: email.toLowerCase()
+    // البحث في users collection أولاً
+    let user = await db.collection('users').findOne({ 
+      email: email.toLowerCase() 
     });
-    
-    console.log('👤 User search result:', user ? `FOUND (Role: ${user?.role})` : 'NOT FOUND');
-    
+
     if (!user) {
+      console.log('❌ User not found:', email);
       return res.status(401).json({
         success: false,
-        message: 'Account not found. Please check your email or register first.'
+        message: 'Invalid email or password'
       });
     }
 
-    // Check if the user's role matches what's expected (optional validation)
-    console.log('🔄 Role check:', { requestedRole: role, actualRole: user.role });
-
-    // Check password (handle both hashed and plain text)
-    let isPasswordValid = false;
-    
-    if (user.password && (user.password.startsWith('$2b$') || user.password.startsWith('$2a$'))) {
-      // Hashed password (bcrypt can handle both $2a$ and $2b$)
-      isPasswordValid = await bcrypt.compare(password, user.password);
-    } else {
-      // Plain text password
-      isPasswordValid = user.password === password;
-    }
-    
-    if (!isPasswordValid) {
+    // فحص كلمة المرور (بسيط للآن)
+    if (user.password !== password) {
+      console.log('❌ Invalid password for:', email);
       return res.status(401).json({
         success: false,
-        message: 'Invalid password'
+        message: 'Invalid email or password'
       });
     }
 
-    // Generate token
-    const token = `${user.role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log('✅ Login successful for:', user.email);
-    
-    return res.json({
+    console.log('✅ Login successful:', email, 'Role:', user.role);
+
+    // إنشاء token
+    const token = 'unibus-' + Date.now() + '-' + (user.role || 'student');
+
+    // تحديد صفحة التوجيه حسب الدور
+    let redirectUrl = '/student/portal';
+    if (user.role === 'admin') {
+      redirectUrl = '/admin/dashboard';
+    } else if (user.role === 'supervisor') {
+      redirectUrl = '/admin/supervisor-dashboard';
+    }
+
+    res.json({
       success: true,
       message: 'Login successful',
       token,
       user: {
-        id: user._id.toString(),
+        id: user._id?.toString() || Date.now().toString(),
         email: user.email,
-        role: user.role,
-        fullName: user.fullName,
+        role: user.role || 'student',
+        fullName: user.fullName || user.name || 'User',
         isActive: user.isActive !== false
-      }
+      },
+      redirectUrl
     });
-    
+
   } catch (error) {
-    console.error('❌ Login error:', error);
-    return res.status(500).json({
+    console.error('💥 Login error:', error);
+    res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Server error occurred'
     });
   }
 });
 
-// Check user endpoint
-router.post('/check-user', async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    console.log('🔍 Backend checking user existence:', { email });
-    
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-
-    // Use existing database connection
-    const db = req.app.locals.db;
-    if (!db) {
-      return res.status(500).json({
-        success: false,
-        message: 'Database connection not available'
-      });
-    }
-    
-    console.log('📡 Database connected for user check');
-    
-    // Find user by email only (no role required)
-    const user = await db.collection('users').findOne({
-      email: email.toLowerCase()
-    });
-    
-    if (user) {
-      console.log('👤 User found:', { email: user.email, role: user.role });
-      return res.json({
-        success: true,
-        user: {
-          id: user._id.toString(),
-          email: user.email,
-          role: user.role,
-          fullName: user.fullName,
-          isActive: user.isActive !== false
-        }
-      });
-    } else {
-      console.log('❌ User not found');
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-    
-  } catch (error) {
-    console.error('❌ Check user error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-});
-
-// Register endpoint
+// Register route
 router.post('/register', async (req, res) => {
   try {
     const { email, password, fullName, role = 'student' } = req.body;
     
-    console.log('📝 Backend registration attempt:', { email, role, fullName });
+    console.log('📝 Registration attempt:', email);
     
     if (!email || !password || !fullName) {
       return res.status(400).json({
         success: false,
-        message: 'Email, password, and full name are required'
+        message: 'All fields are required'
       });
     }
 
-    // Use existing database connection
-    const db = req.app.locals.db;
-    if (!db) {
-      return res.status(500).json({
-        success: false,
-        message: 'Database connection not available'
-      });
-    }
+    const db = await connectDB();
     
-    // Check if user already exists
+    // فحص إذا كان المستخدم موجود
     const existingUser = await db.collection('users').findOne({
       email: email.toLowerCase()
     });
-    
+
     if (existingUser) {
-      return res.status(409).json({
+      return res.status(400).json({
         success: false,
-        message: 'User already exists with this email'
+        message: 'User already exists'
       });
     }
-    
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Create new user
+
+    // إنشاء مستخدم جديد
     const newUser = {
       email: email.toLowerCase(),
-      password: hashedPassword,
+      password,
       fullName,
       role,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     const result = await db.collection('users').insertOne(newUser);
-    
-    // If user is a student, also create student record
+
+    // إذا كان طالب، أنشئ سجل في students collection
     if (role === 'student') {
       const studentData = {
         fullName,
@@ -216,34 +133,32 @@ router.post('/register', async (req, res) => {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
       await db.collection('students').insertOne(studentData);
       console.log('✅ Student record created for:', email);
     }
-    
-    // Generate token
-    const token = `${role}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log('✅ Registration successful for:', email);
-    
-    return res.status(201).json({
+
+    console.log('✅ Registration successful:', email);
+
+    const token = 'unibus-' + Date.now() + '-' + role;
+
+    res.status(201).json({
       success: true,
       message: 'Registration successful',
       token,
       user: {
-        id: result.insertedId.toString(),
+        id: result.insertedId,
         email: newUser.email,
         role: newUser.role,
         fullName: newUser.fullName,
-        isActive: newUser.isActive
+        isActive: true
       }
     });
-    
+
   } catch (error) {
-    console.error('❌ Registration error:', error);
-    return res.status(500).json({
+    console.error('💥 Registration error:', error);
+    res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Server error occurred'
     });
   }
 });
