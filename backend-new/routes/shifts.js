@@ -19,8 +19,27 @@ router.get('/', async (req, res) => {
       query.supervisorId = supervisorId;
     }
     
+    // إصلاح فلترة الحالة - التأكد من أن status=open يعمل بشكل صحيح
     if (status) {
-      query.status = status;
+      if (status === 'open') {
+        // للورديات المفتوحة: status = 'open' أو 'active' وليس لديها shiftEnd أو shiftEnd = null
+        query.$and = [
+          {
+            $or: [
+              { status: 'open' },
+              { status: 'active' }
+            ]
+          },
+          {
+            $and: [
+              { $or: [{ shiftEnd: { $exists: false } }, { shiftEnd: null }] },
+              { status: { $ne: 'closed' } }
+            ]
+          }
+        ];
+      } else {
+        query.status = status;
+      }
     }
     
     if (date) {
@@ -30,13 +49,21 @@ router.get('/', async (req, res) => {
       const endOfDay = new Date(targetDate);
       endOfDay.setHours(23, 59, 59, 999);
       
-      query.$or = [
-        { shiftStart: { $gte: startOfDay, $lte: endOfDay } },
-        { date: { $gte: startOfDay, $lte: endOfDay } }
-      ];
+      const dateQuery = {
+        $or: [
+          { shiftStart: { $gte: startOfDay, $lte: endOfDay } },
+          { date: { $gte: startOfDay, $lte: endOfDay } }
+        ]
+      };
+      
+      if (query.$and) {
+        query.$and.push(dateQuery);
+      } else {
+        query = { ...query, ...dateQuery };
+      }
     }
     
-    console.log('Query:', query);
+    console.log('Final Query:', JSON.stringify(query, null, 2));
     
     // Get shifts from database
     const shifts = await shiftsCollection.find(query)

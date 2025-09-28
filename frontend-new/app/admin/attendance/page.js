@@ -129,14 +129,15 @@ function AdminAttendancePageContent() {
           setPagination(data.pagination);
           
           // Calculate summary stats
-          const uniqueStudents = new Set(data.records.map(record => record.studentEmail));
-          const uniqueShifts = new Set(data.records.map(record => record.shiftId));
+          const recordsArray = Array.isArray(data.records) ? data.records : [];
+          const uniqueStudents = new Set(recordsArray.map(record => record.studentEmail));
+          const uniqueShifts = new Set(recordsArray.map(record => record.shiftId));
           
           setSummaryStats({
             totalRecords: data.pagination.totalRecords,
             totalStudents: uniqueStudents.size,
             totalShifts: uniqueShifts.size,
-            todayRecords: data.records.filter(record => 
+            todayRecords: recordsArray.filter(record => 
               new Date(record.scanTime).toDateString() === new Date().toDateString()
             ).length,
             activeSupervisors: uniqueShifts.size // Use uniqueShifts instead of activeShifts
@@ -250,7 +251,8 @@ function AdminAttendancePageContent() {
   const loadActiveShifts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/shifts?date=${selectedDate}&status=open`, {
+      // استدعاء API مع فلترة صحيحة للورديات المفتوحة فقط (بدون تاريخ محدد)
+      const response = await fetch('/api/shifts?status=open', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -260,19 +262,33 @@ function AdminAttendancePageContent() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setActiveShifts(data.shifts);
+          // فلترة إضافية في Frontend للتأكد من الورديات المفتوحة فعلاً
+          const shiftsArray = Array.isArray(data.shifts) ? data.shifts : [];
+          const trulyOpenShifts = shiftsArray.filter(shift => {
+            if (!shift) return false;
+            
+            const isOpen = shift.status === 'open' || shift.status === 'active';
+            const hasNoEndTime = !shift.shiftEnd;
+            const isNotClosed = shift.status !== 'closed';
+            
+            console.log(`Shift ${shift.id}: status=${shift.status}, hasNoEndTime=${hasNoEndTime}, isNotClosed=${isNotClosed}`);
+            
+            return isOpen && hasNoEndTime && isNotClosed;
+          });
+          
+          setActiveShifts(trulyOpenShifts);
           
           // Update shift indicator
-          if (data.shifts && data.shifts.length > 0) {
+          if (trulyOpenShifts.length > 0) {
             setShiftIndicator({
               isActive: true,
-              count: data.shifts.length,
-              shifts: data.shifts
+              count: trulyOpenShifts.length,
+              shifts: trulyOpenShifts
             });
           } else {
             setShiftIndicator(null);
           }
-          console.log('Active shifts loaded:', data.shifts.length);
+          console.log('✅ Active shifts loaded:', trulyOpenShifts.length, 'من أصل', data.shifts.length, 'ورديات');
         }
       }
     } catch (error) {
