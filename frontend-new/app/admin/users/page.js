@@ -55,7 +55,7 @@ export default function StudentSearchPage() {
       if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
 
       // Try backend first, fallback to frontend API
-      let response = await fetch(`http://localhost:3001/api/admin/students?${params}`, {
+      let response = await fetch(`https://unibus.online:3001/api/admin/students?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

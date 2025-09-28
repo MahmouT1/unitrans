@@ -61,15 +61,21 @@ export const authAPI = {
     },
 
     register: async (userData) => {
-        const response = await api.post('/api/auth/register', userData);
-        if (response.success && response.token) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            if (response.student) {
-                localStorage.setItem('student', JSON.stringify(response.student));
+        try {
+            const response = await api.post('/api/auth/register', userData);
+            if (response.success && response.token) {
+                localStorage.setItem('token', response.token);
+                localStorage.setItem('user', JSON.stringify(response.user));
+                if (response.student) {
+                    localStorage.setItem('student', JSON.stringify(response.student));
+                }
+                return response;
             }
+            throw new Error(response.message || 'Registration failed');
+        } catch (error) {
+            console.error('Registration error:', error);
+            throw error;
         }
-        return response;
     },
 
     logout: async () => {
@@ -94,18 +100,18 @@ export const authAPI = {
 // Student API
 export const studentAPI = {
     getProfile: async () => {
-        return await api.get('/students/profile-simple');
+        return await api.get('/api/students/data');
     },
 
     updateProfile: async (profileData) => {
-        return await api.put('/students/profile-simple', profileData);
+        return await api.put('/api/students/data', profileData);
     },
 
     uploadProfilePhoto: async (file) => {
         const formData = new FormData();
         formData.append('profilePhoto', file);
         
-        return await api.post('/students/profile/photo', formData, {
+        return await api.post('/api/students/profile/photo', formData, {
             timeout: 30000, // 30 second timeout for file uploads
             headers: {
                 // Don't set Content-Type - let browser set it with boundary
@@ -114,19 +120,28 @@ export const studentAPI = {
     },
 
     generateQRCode: async () => {
-        return await api.post('/students/generate-qr');
+        return await api.post('/api/students/generate-qr');
     },
 
     getAttendance: async (params = {}) => {
-        return await api.get('/students/attendance', { params });
+        return await api.get('/api/students/attendance', { params });
     },
 
     submitSupportTicket: async (ticketData) => {
-        return await api.post('/students/support', ticketData);
+        return await api.post('/api/students/support', ticketData);
     },
 
     getSupportTickets: async () => {
-        return await api.get('/students/support');
+        return await api.get('/api/students/support');
+    },
+
+    // New methods for student registration
+    registerStudent: async (studentData) => {
+        return await api.post('/api/students/register', studentData);
+    },
+
+    getStudentProfile: async (studentId) => {
+        return await api.get(`/api/students/${studentId}`);
     }
 };
 
@@ -164,27 +179,36 @@ export const subscriptionAPI = {
 // Attendance API
 export const attendanceAPI = {
     scanQR: async (qrData) => {
-        return await api.post('/attendance/scan-qr', qrData);
+        return await api.post('/api/shifts/scan', qrData);
     },
 
     getRecords: async (params = {}) => {
-        return await api.get('/attendance/records', { params });
+        return await api.get('/api/attendance/all-records', { params });
     },
 
     getTodayAttendance: async () => {
-        return await api.get('/attendance/today');
+        return await api.get('/api/attendance/today');
     },
 
     markAbsent: async (attendanceData) => {
-        return await api.post('/attendance/mark-absent', attendanceData);
+        return await api.post('/api/attendance/mark-absent', attendanceData);
     },
 
     updateRecord: async (attendanceId, updateData) => {
-        return await api.put(`/attendance/update/${attendanceId}`, updateData);
+        return await api.put(`/api/attendance/update/${attendanceId}`, updateData);
     },
 
     getStats: async (params = {}) => {
-        return await api.get('/attendance/stats', { params });
+        return await api.get('/api/attendance/stats', { params });
+    },
+
+    // New methods for attendance tracking
+    getStudentAttendanceCount: async (studentEmail) => {
+        return await api.get(`/api/attendance/student-count/${studentEmail}`);
+    },
+
+    updateAttendanceCount: async (studentEmail, newCount) => {
+        return await api.put(`/api/attendance/update-count/${studentEmail}`, { count: newCount });
     }
 };
 
@@ -206,31 +230,42 @@ export const transportationAPI = {
 // Admin API
 export const adminAPI = {
     getDashboardStats: async () => {
-        return await api.get('/admin/dashboard/stats');
+        return await api.get('/api/admin/dashboard/stats');
     },
 
     getStudents: async (params = {}) => {
-        return await api.get('/admin/students', { params });
+        return await api.get('/api/admin/students', { params });
     },
 
     getStudentDetails: async (studentId) => {
-        return await api.get(`/admin/students/${studentId}`);
+        return await api.get(`/api/admin/students/${studentId}`);
     },
 
     updateStudentStatus: async (studentId, statusData) => {
-        return await api.put(`/admin/students/${studentId}/status`, statusData);
+        return await api.put(`/api/admin/students/${studentId}/status`, statusData);
     },
 
     getSupportTickets: async (params = {}) => {
-        return await api.get('/admin/support-tickets', { params });
+        return await api.get('/api/admin/support-tickets', { params });
     },
 
     updateSupportTicket: async (ticketId, updateData) => {
-        return await api.put(`/admin/support-tickets/${ticketId}`, updateData);
+        return await api.put(`/api/admin/support-tickets/${ticketId}`, updateData);
     },
 
     generateReport: async (reportType, params = {}) => {
-        return await api.get(`/admin/reports/${reportType}`, { params });
+        return await api.get(`/api/admin/reports/${reportType}`, { params });
+    },
+
+    // New methods for student search with attendance
+    searchStudents: async (searchTerm = '', page = 1, limit = 20) => {
+        return await api.get('/api/admin/students', { 
+            params: { search: searchTerm, page, limit } 
+        });
+    },
+
+    getStudentAttendance: async (studentId) => {
+        return await api.get(`/api/admin/students/${studentId}/attendance`);
     }
 };
 

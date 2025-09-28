@@ -128,7 +128,7 @@ export default function StudentRegistration() {
 
       console.log('Updating student profile with data:', updateData);
 
-      const response = await fetch('/api/students/profile-simple', {
+      const response = await fetch('https://unibus.online:3001/api/students/data', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -145,11 +145,13 @@ export default function StudentRegistration() {
         console.log('Profile updated successfully, student data:', data.student);
         // Generate QR code
         try {
-          await fetch('/api/students/generate-qr', {
+          await fetch('https://unibus.online:3001/api/students/generate-qr', {
             method: 'POST',
             headers: {
+              'Content-Type': 'application/json',
               'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+            },
+            body: JSON.stringify({ email: formData.email })
           });
         } catch (qrError) {
           console.log('QR generation failed:', qrError);

@@ -1,442 +1,333 @@
-// routes/students.js
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
+const { MongoClient } = require('mongodb');
+const bcrypt = require('bcrypt');
 const QRCode = require('qrcode');
-const { MongoClient, ObjectId } = require('mongodb');
-const authMiddleware = require('../middleware/auth');
-const { body, validationResult } = require('express-validator');
-
 const router = express.Router();
 
-// Get student data by email (for QR scanner)
-router.get('/data', async (req, res) => {
-    try {
-        const { email } = req.query;
-        
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email parameter is required'
-            });
-        }
+// Get database connection
+const getDatabase = async () => {
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+  const dbName = process.env.MONGODB_DB_NAME || 'student_portal';
+  const client = new MongoClient(mongoUri);
+  await client.connect();
+  return client.db(dbName);
+};
 
-        const db = req.app.locals.db;
-        if (!db) {
-            return res.status(500).json({
-                success: false,
-                message: 'Database connection not available'
-            });
-        }
-
-        // Find student by email
-        const student = await db.collection('students').findOne({ 
-            email: email.toLowerCase() 
-        });
-
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student not found'
-            });
-        }
-
-        // Get subscription info if exists
-        const subscription = await db.collection('subscriptions').findOne({ 
-            studentEmail: email.toLowerCase() 
-        });
-
-        res.json({
-            success: true,
-            student: {
-                ...student,
-                subscription: subscription || null
-            }
-        });
-
-    } catch (error) {
-        console.error('Get student data error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get student data',
-            error: error.message
-        });
+// Register new student
+router.post('/register', async (req, res) => {
+  try {
+    const { fullName, email, phoneNumber, college, grade, major, address } = req.body;
+    
+    console.log('📝 Student registration attempt:', { email, fullName });
+    
+    if (!fullName || !email || !phoneNumber || !college || !grade || !major) {
+      return res.status(400).json({
+        success: false,
+        message: 'All required fields must be provided'
+      });
     }
-});
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/profiles/');
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
-    }
-});
-
-// Get student profile
-router.get('/profile', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        const student = await Student.findOne({ userId: req.user._id })
-            .populate('userId', 'email lastLogin');
-
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            student
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get student profile',
-            error: error.message
-        });
-    }
-});
-
-// Update student profile
-router.put('/profile', [
-    authMiddleware,
-    body('fullName').optional().trim().notEmpty(),
-    body('phoneNumber').optional().trim(),
-    body('college').optional().trim(),
-    body('major').optional().trim()
-], async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                success: false,
-                message: 'Validation errors',
-                errors: errors.array()
-            });
-        }
-
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        const updateData = req.body;
-
-        // Remove undefined values
-        Object.keys(updateData).forEach(key => {
-            if (updateData[key] === undefined) {
-                delete updateData[key];
-            }
-        });
-
-        const student = await Student.findOneAndUpdate(
-            { userId: req.user._id },
-            updateData,
-            { new: true, runValidators: true }
-        );
-
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Profile updated successfully',
-            student
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to update profile',
-            error: error.message
-        });
-    }
-});
-
-
-
-// Upload profile photo - Simple working version
-router.post('/profile/photo', authMiddleware, (req, res, next) => {
-    upload.single('profilePhoto')(req, res, (err) => {
-        if (err) {
-            return res.status(400).json({
-                success: false,
-                message: err.message
-            });
-        }
-        next();
+    const db = await getDatabase();
+    
+    // Check if student already exists
+    const existingStudent = await db.collection('students').findOne({
+      email: email.toLowerCase()
     });
-}, async (req, res) => {
-    try {
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No file uploaded'
-            });
-        }
-
-        const photoUrl = `/uploads/profiles/${req.file.filename}`;
-
-        const student = await Student.findOneAndUpdate(
-            { userId: req.user._id },
-            { profilePhoto: photoUrl },
-            { new: true }
-        );
-
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Photo uploaded successfully',
-            photoUrl: photoUrl
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to upload photo',
-            error: error.message
-        });
+    
+    if (existingStudent) {
+      return res.status(409).json({
+        success: false,
+        message: 'Student already exists with this email'
+      });
     }
+    
+    // Create student data
+    const studentData = {
+      fullName,
+      email: email.toLowerCase(),
+      phoneNumber,
+      college,
+      grade,
+      major,
+      address: address || {},
+      attendanceCount: 0,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    const result = await db.collection('students').insertOne(studentData);
+    const studentId = result.insertedId.toString();
+    
+    // Generate QR Code
+    const qrData = {
+      studentId: studentId,
+      email: email.toLowerCase(),
+      fullName: fullName,
+      timestamp: new Date().toISOString()
+    };
+    
+    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData));
+    
+    // Update student with QR code
+    await db.collection('students').updateOne(
+      { _id: result.insertedId },
+      { $set: { qrCode: qrCodeDataURL, qrData: qrData } }
+    );
+    
+    console.log('✅ Student registration successful:', email);
+    
+    return res.status(201).json({
+      success: true,
+      message: 'Student registered successfully',
+      student: {
+        id: studentId,
+        ...studentData,
+        qrCode: qrCodeDataURL
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Student registration error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
-// Generate QR Code for student
-router.post('/generate-qr', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        const student = await Student.findOne({ userId: req.user._id });
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        // Create QR code data
-        const qrData = {
-            studentId: student.studentId,
-            id: student._id,
-            name: student.fullName,
-            college: student.college,
-            timestamp: new Date().toISOString()
-        };
-
-        // Generate QR code
-        const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData));
-
-        // Update student with QR code
-        student.qrCode = qrCodeDataURL;
-        await student.save();
-
-        res.json({
-            success: true,
-            message: 'QR code generated successfully',
-            qrCode: qrCodeDataURL
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to generate QR code',
-            error: error.message
-        });
+// Get student data
+router.get('/data', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email parameter is required'
+      });
     }
+
+    const db = await getDatabase();
+    const student = await db.collection('students').findOne({
+      email: email.toLowerCase()
+    });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+    
+    return res.json({
+      success: true,
+      student: {
+        id: student._id.toString(),
+        fullName: student.fullName,
+        email: student.email,
+        phoneNumber: student.phoneNumber,
+        college: student.college,
+        grade: student.grade,
+        major: student.major,
+        address: student.address,
+        attendanceCount: student.attendanceCount || 0,
+        qrCode: student.qrCode,
+        isActive: student.isActive,
+        createdAt: student.createdAt,
+        updatedAt: student.updatedAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Get student data error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
-// Get student attendance records
-router.get('/attendance', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        const student = await Student.findOne({ userId: req.user._id });
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        const { page = 1, limit = 10, startDate, endDate } = req.query;
-
-        const query = { studentId: student._id };
-
-        if (startDate || endDate) {
-            query.date = {};
-            if (startDate) query.date.$gte = new Date(startDate);
-            if (endDate) query.date.$lte = new Date(endDate);
-        }
-
-        const attendanceRecords = await Attendance.find(query)
-            .sort({ date: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .populate('supervisorId', 'email');
-
-        const total = await Attendance.countDocuments(query);
-
-        res.json({
-            success: true,
-            attendance: attendanceRecords,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                pages: Math.ceil(total / limit)
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get attendance records',
-            error: error.message
-        });
+// Update student data
+router.put('/data', async (req, res) => {
+  try {
+    const { email, ...updateData } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
     }
+
+    const db = await getDatabase();
+    
+    // Update student data
+    const result = await db.collection('students').updateOne(
+      { email: email.toLowerCase() },
+      { 
+        $set: { 
+          ...updateData, 
+          updatedAt: new Date() 
+        } 
+      }
+    );
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+    
+    // Get updated student data
+    const updatedStudent = await db.collection('students').findOne({
+      email: email.toLowerCase()
+    });
+    
+    return res.json({
+      success: true,
+      message: 'Student data updated successfully',
+      student: {
+        id: updatedStudent._id.toString(),
+        fullName: updatedStudent.fullName,
+        email: updatedStudent.email,
+        phoneNumber: updatedStudent.phoneNumber,
+        college: updatedStudent.college,
+        grade: updatedStudent.grade,
+        major: updatedStudent.major,
+        address: updatedStudent.address,
+        attendanceCount: updatedStudent.attendanceCount || 0,
+        qrCode: updatedStudent.qrCode,
+        isActive: updatedStudent.isActive,
+        createdAt: updatedStudent.createdAt,
+        updatedAt: updatedStudent.updatedAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Update student data error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
-// Submit support ticket
-router.post('/support', [
-    authMiddleware,
-    body('category').isIn(['emergency', 'general', 'academic', 'technical', 'billing']),
-    body('priority').optional().isIn(['low', 'medium', 'high', 'critical']),
-    body('subject').trim().notEmpty(),
-    body('description').trim().isLength({ min: 20 })
-], async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                success: false,
-                message: 'Validation errors',
-                errors: errors.array()
-            });
-        }
-
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        const student = await Student.findOne({ userId: req.user._id });
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        const { category, priority, subject, description } = req.body;
-
-        const supportTicket = new SupportTicket({
-            studentId: student._id,
-            email: req.user.email,
-            category,
-            priority,
-            subject,
-            description
-        });
-
-        await supportTicket.save();
-
-        res.status(201).json({
-            success: true,
-            message: 'Support ticket submitted successfully',
-            ticket: supportTicket
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to submit support ticket',
-            error: error.message
-        });
+// Generate QR Code for existing student
+router.post('/generate-qr', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
     }
+
+    const db = await getDatabase();
+    const student = await db.collection('students').findOne({
+      email: email.toLowerCase()
+    });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+    
+    // Generate new QR Code
+    const qrData = {
+      studentId: student._id.toString(),
+      email: student.email,
+      fullName: student.fullName,
+      timestamp: new Date().toISOString()
+    };
+    
+    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData));
+    
+    // Update student with new QR code
+    await db.collection('students').updateOne(
+      { _id: student._id },
+      { $set: { qrCode: qrCodeDataURL, qrData: qrData } }
+    );
+    
+    return res.json({
+      success: true,
+      message: 'QR Code generated successfully',
+      qrCode: qrCodeDataURL,
+      qrData: qrData
+    });
+    
+  } catch (error) {
+    console.error('❌ Generate QR Code error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
-// Get student support tickets
-router.get('/support', authMiddleware, async (req, res) => {
-    try {
-        if (req.user.role !== 'student') {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Students only.'
-            });
-        }
-
-        const student = await Student.findOne({ userId: req.user._id });
-        if (!student) {
-            return res.status(404).json({
-                success: false,
-                message: 'Student profile not found'
-            });
-        }
-
-        const tickets = await SupportTicket.find({ studentId: student._id })
-            .sort({ createdAt: -1 })
-            .populate('assignedTo', 'email');
-
-        res.json({
-            success: true,
-            tickets
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get support tickets',
-            error: error.message
-        });
+// Get all students for admin
+router.get('/all', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = '' } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const db = await getDatabase();
+    
+    // Build search query
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { fullName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { college: { $regex: search, $options: 'i' } },
+          { major: { $regex: search, $options: 'i' } }
+        ]
+      };
     }
+    
+    const students = await db.collection('students')
+      .find(query)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .toArray();
+    
+    const total = await db.collection('students').countDocuments(query);
+    
+    return res.json({
+      success: true,
+      students: students.map(student => ({
+        id: student._id.toString(),
+        fullName: student.fullName,
+        email: student.email,
+        phoneNumber: student.phoneNumber,
+        college: student.college,
+        grade: student.grade,
+        major: student.major,
+        attendanceCount: student.attendanceCount || 0,
+        isActive: student.isActive,
+        createdAt: student.createdAt
+      })),
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Get all students error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
 });
 
 module.exports = router;

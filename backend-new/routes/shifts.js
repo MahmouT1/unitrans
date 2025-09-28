@@ -427,6 +427,12 @@ router.post('/scan', async (req, res) => {
       { id: activeShift.id },
       { $inc: { totalScans: 1 }, $push: { attendanceRecords: attendanceRecord } }
     );
+    
+    // تحديث عدد أيام الحضور للطالب
+    await studentsCollection.updateOne(
+      { email: attendanceRecord.studentEmail },
+      { $inc: { attendanceCount: 1 } }
+    );
 
     console.log('✅ Attendance registered successfully for:', attendanceRecord.studentName);
     
