@@ -51,8 +51,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-// Auth routes removed temporarily
+// API Routes  
+app.use('/api/auth-pro', require('./routes/auth-professional')); // Professional Auth System
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/students', require('./routes/students'));
 app.use('/api/attendance', require('./routes/attendance'));
