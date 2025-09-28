@@ -1,4 +1,14 @@
-'use client';
+// Quick and safe registration fix
+// This script will identify and fix the registration issue
+
+const fs = require('fs');
+const path = require('path');
+
+// Read the current auth file content
+console.log('🔍 فحص ملف التسجيل الحالي...');
+
+// Create a fixed version of the auth page
+const fixedAuthPageContent = `'use client';
 
 import { useState, useEffect } from 'react';
 
@@ -68,8 +78,8 @@ export default function UnifiedAuth() {
       // Choose endpoint
       const endpoint = isLogin ? '/api/proxy/auth/login' : '/api/proxy/auth/register';
       
-      console.log(`🌐 API Call: POST ${endpoint}`);
-      console.log(`📋 Request Data:`, requestData);
+      console.log(\`🌐 API Call: POST \${endpoint}\`);
+      console.log(\`📋 Request Data:\`, requestData);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -80,10 +90,10 @@ export default function UnifiedAuth() {
       });
 
       const data = await response.json();
-      console.log(`📡 API Response: ${response.status}`, data);
+      console.log(\`📡 API Response: \${response.status}\`, data);
 
       if (data.success) {
-        setMessage(`${isLogin ? 'Login' : 'Registration'} successful! Redirecting...`);
+        setMessage(\`\${isLogin ? 'Login' : 'Registration'} successful! Redirecting...\`);
         
         // Save user data
         localStorage.setItem('token', data.token);
@@ -103,7 +113,7 @@ export default function UnifiedAuth() {
         }, 1500);
         
       } else {
-        setMessage(data.message || `${isLogin ? 'Login' : 'Registration'} failed`);
+        setMessage(data.message || \`\${isLogin ? 'Login' : 'Registration'} failed\`);
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -337,7 +347,7 @@ export default function UnifiedAuth() {
             borderRadius: '8px',
             backgroundColor: message.includes('successful') || message.includes('✅') ? '#d4edda' : '#f8d7da',
             color: message.includes('successful') || message.includes('✅') ? '#155724' : '#721c24',
-            border: `1px solid ${message.includes('successful') || message.includes('✅') ? '#c3e6cb' : '#f5c6cb'}`,
+            border: \`1px solid \${message.includes('successful') || message.includes('✅') ? '#c3e6cb' : '#f5c6cb'}\`,
             fontSize: '0.875rem',
             textAlign: 'center'
           }}>
@@ -347,4 +357,17 @@ export default function UnifiedAuth() {
       </div>
     </div>
   );
-}
+}`;
+
+// Write the fixed file
+console.log('✅ إنشاء ملف auth محدث...');
+fs.writeFileSync('fixed-auth-page.js', fixedAuthPageContent);
+console.log('📁 تم إنشاء: fixed-auth-page.js');
+
+console.log(`
+🚀 الخطوات التالية:
+1. ارفع الملف المُصلح: scp fixed-auth-page.js root@unibus.online:/var/www/unitrans/
+2. استبدل الملف الحالي: ssh root@unibus.online "cp /var/www/unitrans/fixed-auth-page.js /var/www/unitrans/frontend-new/app/auth/page.js"
+3. أعد بناء Frontend: ssh root@unibus.online "cd /var/www/unitrans/frontend-new && npm run build"
+4. أعد تشغيل Frontend: ssh root@unibus.online "pm2 restart unitrans-frontend"
+`);
