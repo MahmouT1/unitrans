@@ -59,7 +59,9 @@ export default function UnifiedAuth() {
     }
 
     try {
-      const endpoint = isLogin ? '/api/proxy/auth/login' : '/api/proxy/auth/register';
+      // Use backend directly since proxy routes aren't working
+      const backendUrl = 'https://unibus.online:3001';
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const body = isLogin 
         ? { email: formData.email, password: formData.password }
         : { 
@@ -69,38 +71,43 @@ export default function UnifiedAuth() {
             role: 'student'
           };
 
-      console.log('API Call:', 'POST', endpoint);
+      console.log('API Call:', 'POST', backendUrl + endpoint);
       console.log('Request Data:', body);
 
-      const response = await apiCall(endpoint, {
+      const response = await fetch(backendUrl + endpoint, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(body)
       });
 
-      console.log('API Response:', response);
+      const responseData = await response.json();
 
-      if (response.ok && response.data.success) {
+      console.log('API Response:', responseData);
+
+      if (response.ok && responseData.success) {
         // Store authentication data
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('userToken', response.data.token);
-        localStorage.setItem('userRole', response.data.user.role);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', responseData.token);
+        localStorage.setItem('userToken', responseData.token);
+        localStorage.setItem('userRole', responseData.user.role);
+        localStorage.setItem('user', JSON.stringify(responseData.user));
         localStorage.setItem('isAuthenticated', 'true');
 
         setMessage(`✅ ${isLogin ? 'Login' : 'Registration'} successful! Redirecting...`);
         
         // Redirect based on role
         setTimeout(() => {
-          if (response.data.user.role === 'admin') {
+          if (responseData.user.role === 'admin') {
             window.location.href = '/admin/dashboard';
-          } else if (response.data.user.role === 'supervisor') {
+          } else if (responseData.user.role === 'supervisor') {
             window.location.href = '/admin/supervisor-dashboard';
           } else {
             window.location.href = '/student/portal';
           }
         }, 2000);
       } else {
-        setMessage('❌ ' + (response.data.message || 'Operation failed'));
+        setMessage('❌ ' + (responseData.message || 'Operation failed'));
       }
     } catch (error) {
       console.error('Error:', error);
