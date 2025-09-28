@@ -8,6 +8,8 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     
     console.log('🔍 Login attempt:', email);
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 Email type:', typeof email, 'Password type:', typeof password);
     
     if (!email || !password) {
       return res.status(400).json({
@@ -17,11 +19,22 @@ router.post('/login', async (req, res) => {
     }
 
     const db = await connectDB();
+    console.log('🔗 Database connected successfully');
     
     // البحث في users collection أولاً
+    console.log('🔍 Searching for user with email:', email.toLowerCase());
     let user = await db.collection('users').findOne({ 
       email: email.toLowerCase() 
     });
+    console.log('🔍 User search result:', user ? 'FOUND' : 'NOT_FOUND');
+    if (user) {
+      console.log('🔍 User details:', {
+        email: user.email,
+        role: user.role,
+        hasPassword: !!user.password,
+        passwordLength: user.password ? user.password.length : 0
+      });
+    }
 
     if (!user) {
       console.log('❌ User not found:', email);
@@ -31,8 +44,19 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // فحص كلمة المرور (بسيط للآن)
-    if (user.password !== password) {
+    // فحص كلمة المرور - يدعم النص العادي والمشفر
+    let isPasswordValid = false;
+    
+    if (user.password === password) {
+      // كلمة مرور نص عادي
+      isPasswordValid = true;
+    } else if (user.password && (user.password.startsWith('$2a$') || user.password.startsWith('$2b$'))) {
+      // كلمة مرور مشفرة
+      const bcrypt = require('bcryptjs');
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    }
+    
+    if (!isPasswordValid) {
       console.log('❌ Invalid password for:', email);
       return res.status(401).json({
         success: false,

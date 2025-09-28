@@ -1,7 +1,7 @@
 // API Configuration
 const API_CONFIG = {
   // Use proxy routes to avoid CSP issues
-  BACKEND_URL: '',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || '',
   
   // API Endpoints (using proxy routes)
   ENDPOINTS: {

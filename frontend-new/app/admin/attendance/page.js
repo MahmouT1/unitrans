@@ -120,17 +120,17 @@ export default function AdminAttendancePage() {
           50% { opacity: 0.5; }
         }
       `}</style>
-
+      
       <h1 style={{ fontSize: '28px', marginBottom: '30px', color: '#333' }}>
         Attendance Records Management
-      </h1>
-
+        </h1>
+        
       {/* Summary Cards */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-        gap: '20px', 
-        marginBottom: '30px' 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px'
       }}>
         <div style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -144,7 +144,7 @@ export default function AdminAttendancePage() {
           </div>
           <div style={{ fontSize: '16px' }}>Total Records</div>
         </div>
-
+        
         <div style={{
           background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
           borderRadius: '16px',
@@ -157,7 +157,7 @@ export default function AdminAttendancePage() {
           </div>
           <div style={{ fontSize: '16px' }}>Unique Students</div>
         </div>
-
+        
         <div style={{
           background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
           borderRadius: '16px',
@@ -170,7 +170,7 @@ export default function AdminAttendancePage() {
           </div>
           <div style={{ fontSize: '16px' }}>Total Shifts</div>
         </div>
-
+        
         <div style={{
           background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
           borderRadius: '16px',
@@ -184,7 +184,7 @@ export default function AdminAttendancePage() {
           <div style={{ fontSize: '16px' }}>Active Shifts</div>
         </div>
       </div>
-
+      
       {/* Active Shifts - Clickable Green Cards */}
       {activeShifts.length > 0 && (
         <div style={{
@@ -195,7 +195,7 @@ export default function AdminAttendancePage() {
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
         }}>
           <h2 style={{ marginBottom: '20px', color: '#333', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
+          <div style={{ 
               width: '12px',
               height: '12px',
               borderRadius: '50%',
@@ -203,7 +203,7 @@ export default function AdminAttendancePage() {
               animation: 'pulse 2s infinite'
             }}></div>
             🟢 Live Supervisor Monitoring ({activeShifts.length} Active)
-          </h2>
+            </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {activeShifts.map((shift, index) => (
               <div
@@ -229,35 +229,35 @@ export default function AdminAttendancePage() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600' }}>
+                    <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600' }}>
                     {shift.supervisorName || 'Transportation Supervisor'}
-                  </h3>
-                  <span style={{
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    padding: '4px 8px',
-                    borderRadius: '12px',
+                    </h3>
+                    <span style={{
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
                     fontSize: '11px',
-                    fontWeight: '500'
-                  }}>
+                      fontWeight: '500'
+                    }}>
                     LIVE
-                  </span>
-                </div>
+                    </span>
+                  </div>
                 <div style={{ marginBottom: '8px', fontSize: '14px' }}>
                   <strong>Started:</strong> {shift.shiftStart ? new Date(shift.shiftStart).toLocaleTimeString() : 'N/A'}
-                </div>
+                    </div>
                 <div style={{ marginBottom: '8px', fontSize: '14px' }}>
                   <strong>Shift ID:</strong> {shift.id || 'N/A'}
-                </div>
+                    </div>
                 <div style={{ marginBottom: '8px', fontSize: '14px' }}>
                   <strong>Scans:</strong> {shift.totalScans || 0}
-                </div>
-                <div style={{ 
+                    </div>
+                  <div style={{ 
                   marginTop: '15px', 
                   padding: '8px', 
                   background: 'rgba(255, 255, 255, 0.1)', 
                   borderRadius: '8px',
                   textAlign: 'center',
-                  fontSize: '12px',
+                            fontSize: '12px',
                   fontWeight: '500'
                 }}>
                   👆 Click to view live attendance
@@ -270,25 +270,25 @@ export default function AdminAttendancePage() {
 
       {/* Message when no active shifts */}
       {activeShifts.length === 0 && (
-        <div style={{
-          background: 'white',
-          borderRadius: '16px',
-          padding: '24px',
+      <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        padding: '24px',
           marginBottom: '30px',
           boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
           textAlign: 'center'
         }}>
           <h2 style={{ color: '#6b7280', marginBottom: '10px' }}>
             ✅ No Active Shifts
-          </h2>
+            </h2>
           <p style={{ color: '#9ca3af', margin: '0' }}>
             All supervisors have closed their shifts. Green cards will appear when supervisors open new shifts.
-          </p>
-        </div>
+            </p>
+          </div>
       )}
 
       {/* 📚 Historical Attendance Records by Shift - من قاعدة البيانات */}
-      <div style={{
+          <div style={{
         background: 'white',
         borderRadius: '16px',
         padding: '24px',
@@ -296,16 +296,16 @@ export default function AdminAttendancePage() {
       }}>
         <h2 style={{ marginBottom: '20px', color: '#333', display: 'flex', alignItems: 'center', gap: '10px' }}>
           📚 Historical Attendance Records 
-          <span style={{
+            <span style={{ 
             background: '#e0f2fe',
             color: '#0277bd',
             padding: '4px 12px',
             borderRadius: '20px',
             fontSize: '12px',
-            fontWeight: '600'
-          }}>
+              fontWeight: '600'
+            }}>
             Database Connected ✅
-          </span>
+            </span>
         </h2>
         
         {Object.keys(groupedRecords).length > 0 ? (
@@ -313,37 +313,37 @@ export default function AdminAttendancePage() {
             {Object.entries(groupedRecords).map(([shiftId, shiftData]) => (
               <div key={shiftId} style={{
                 border: '1px solid #e5e7eb',
-                borderRadius: '12px',
+          borderRadius: '12px',
                 padding: '20px',
                 background: '#fafafa'
               }}>
-                <div style={{
-                  display: 'flex',
+                        <div style={{
+                          display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
+                          alignItems: 'center',
                   marginBottom: '15px',
                   paddingBottom: '10px',
                   borderBottom: '2px solid #e5e7eb'
                 }}>
-                  <div>
+                        <div>
                     <h3 style={{ margin: '0', color: '#374151', fontSize: '18px' }}>
                       📋 Shift: {shiftId}
                     </h3>
                     <p style={{ margin: '5px 0 0 0', color: '#6b7280', fontSize: '14px' }}>
                       👨‍💼 Supervisor: {shiftData.supervisorName} | 📅 Date: {shiftData.shiftDate || 'Unknown Date'}
                     </p>
-                  </div>
-                  <div style={{
+                          </div>
+                        <div style={{
                     background: '#dbeafe',
                     color: '#1e40af',
                     padding: '6px 12px',
                     borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: '600'
-                  }}>
+                          fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
                     {shiftData.records.length} Records
-                  </div>
-                </div>
+                        </div>
+                        </div>
                 
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -364,20 +364,20 @@ export default function AdminAttendancePage() {
                           <td style={{ padding: '12px', color: '#6b7280' }}>{record.college || 'N/A'}</td>
                           <td style={{ padding: '12px', color: '#6b7280' }}>
                             {record.scanTime ? new Date(record.scanTime).toLocaleString() : 'N/A'}
-                          </td>
+                    </td>
                           <td style={{ padding: '12px' }}>
-                            <span style={{
+                      <span style={{
                               background: record.status === 'Present' ? '#d1fae5' : '#fee2e2',
                               color: record.status === 'Present' ? '#065f46' : '#dc2626',
                               padding: '4px 8px',
                               borderRadius: '12px',
-                              fontSize: '12px',
+                        fontSize: '12px',
                               fontWeight: '500'
-                            }}>
+                      }}>
                               {record.status || 'Unknown'}
-                            </span>
-                          </td>
-                        </tr>
+                      </span>
+                    </td>
+                  </tr>
                       ))}
                     </tbody>
                   </table>
@@ -387,28 +387,28 @@ export default function AdminAttendancePage() {
           </div>
         ) : (
           <div style={{ 
-            textAlign: 'center', 
+                      textAlign: 'center', 
             padding: '40px', 
-            color: '#6b7280',
-            fontSize: '16px'
-          }}>
+                      color: '#6b7280',
+                      fontSize: '16px'
+                    }}>
             📋 No attendance records found in database. Records will appear when supervisors scan student QR codes and close their shifts.
           </div>
         )}
-      </div>
+        </div>
 
       {/* Live Attendance Modal */}
       {showLiveModal && selectedShift && (
-        <div style={{
+          <div style={{ 
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
           zIndex: 1000
         }}>
           <div style={{
@@ -420,8 +420,8 @@ export default function AdminAttendancePage() {
             overflow: 'auto',
             boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)'
           }}>
-            <div style={{
-              display: 'flex',
+            <div style={{ 
+              display: 'flex', 
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '20px',
@@ -437,27 +437,27 @@ export default function AdminAttendancePage() {
                   Started: {selectedShift.shiftStart ? new Date(selectedShift.shiftStart).toLocaleTimeString() : 'N/A'}
                 </p>
               </div>
-              <button
+                <button
                 onClick={closeModal}
-                style={{
+                  style={{
                   background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
+                    color: 'white',
+                    border: 'none',
                   borderRadius: '50%',
                   width: '40px',
                   height: '40px',
                   fontSize: '18px',
-                  cursor: 'pointer',
+                    cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
-                }}
-              >
+                  }}
+                >
                 ✕
-              </button>
+                </button>
             </div>
-
-            <div style={{
+            
+          <div style={{ 
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
               borderRadius: '12px',
@@ -509,7 +509,7 @@ export default function AdminAttendancePage() {
                             padding: '4px 8px',
                             borderRadius: '12px',
                             fontSize: '12px',
-                            fontWeight: '500'
+                    fontWeight: '500'
                           }}>
                             {record.status || 'Present'}
                           </span>
@@ -540,22 +540,23 @@ export default function AdminAttendancePage() {
 
       {/* Refresh Button */}
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <button
+            <button
           onClick={() => window.location.reload()}
-          style={{
+              style={{
             background: '#3b82f6',
             color: 'white',
             border: 'none',
             padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '14px',
+                borderRadius: '8px',
+                fontSize: '14px',
             fontWeight: '600',
             cursor: 'pointer'
-          }}
-        >
+              }}
+            >
           🔄 Refresh Data
-        </button>
+            </button>
       </div>
     </div>
   );
 }
+
