@@ -34,7 +34,8 @@ const API_CONFIG = {
 
 // Helper function to build full API URL
 export const getApiUrl = (endpoint) => {
-  return `${API_CONFIG.BACKEND_URL}${endpoint}`;
+  // For proxy routes, use relative URLs to avoid CSP issues
+  return endpoint;
 };
 
 // Helper function for API calls
