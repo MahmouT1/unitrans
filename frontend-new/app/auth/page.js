@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiCall, getApiUrl } from '../../config/api';
 
 export default function UnifiedAuth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,16 +12,6 @@ export default function UnifiedAuth() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-
-  // Clear cache on component mount if requested
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('clear') === '1') {
-      localStorage.clear();
-      sessionStorage.clear();
-      setMessage('✅ Cache cleared! You can now login with your updated role.');
-    }
-  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,79 +26,70 @@ export default function UnifiedAuth() {
     setLoading(true);
     setMessage('');
 
-    // Clear any existing cached data to prevent conflicts
-    localStorage.removeItem('token');
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('user');
+    // Clear any existing cached data
+    localStorage.clear();
     sessionStorage.clear();
 
     // Validation for registration
     if (!isLogin) {
       if (formData.password !== formData.confirmPassword) {
-        setMessage('Passwords do not match');
+        setMessage('❌ Passwords do not match');
         setLoading(false);
         return;
       }
       if (formData.password.length < 6) {
-        setMessage('Password must be at least 6 characters');
+        setMessage('❌ Password must be at least 6 characters');
         setLoading(false);
         return;
       }
     }
 
     try {
-      // Use proxy routes to avoid CSP issues
-      const endpoint = isLogin ? '/api/proxy/auth/login' : '/api/proxy/auth/register';
-      const body = isLogin 
-        ? { email: formData.email, password: formData.password }
-        : { 
-            email: formData.email, 
-            password: formData.password,
-            fullName: formData.fullName,
-            role: 'student'
-          };
+      // Direct server-side form submission to avoid CSP issues
+      const form = new FormData();
+      form.append('email', formData.email);
+      form.append('password', formData.password);
+      if (!isLogin) {
+        form.append('fullName', formData.fullName);
+        form.append('role', 'student');
+      }
 
-      console.log('API Call:', 'POST', endpoint);
-      console.log('Request Data:', body);
-
+      // Use Nginx route that proxies to backend
+      const endpoint = isLogin ? '/auth-api/login' : '/auth-api/register';
+      
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body)
+        body: form
       });
 
-      const responseData = await response.json();
+      const data = await response.json();
+      console.log('Auth Response:', data);
 
-      console.log('API Response:', responseData);
-
-      if (response.ok && responseData.success) {
+      if (response.ok && data.success) {
         // Store authentication data
-        localStorage.setItem('token', responseData.token);
-        localStorage.setItem('userToken', responseData.token);
-        localStorage.setItem('userRole', responseData.user.role);
-        localStorage.setItem('user', JSON.stringify(responseData.user));
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userToken', data.token);
+        localStorage.setItem('userRole', data.user.role);
+        localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isAuthenticated', 'true');
 
         setMessage(`✅ ${isLogin ? 'Login' : 'Registration'} successful! Redirecting...`);
         
         // Redirect based on role
         setTimeout(() => {
-          if (responseData.user.role === 'admin') {
+          if (data.user.role === 'admin') {
             window.location.href = '/admin/dashboard';
-          } else if (responseData.user.role === 'supervisor') {
+          } else if (data.user.role === 'supervisor') {
             window.location.href = '/admin/supervisor-dashboard';
           } else {
             window.location.href = '/student/portal';
           }
         }, 2000);
       } else {
-        setMessage('❌ ' + (responseData.message || 'Operation failed'));
+        setMessage('❌ ' + (data.message || 'Operation failed'));
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Auth Error:', error);
       setMessage('❌ Connection error. Please try again.');
     } finally {
       setLoading(false);
@@ -381,6 +361,30 @@ export default function UnifiedAuth() {
               </p>
             </div>
           )}
+
+          {/* Quick Login Section */}
+          <div style={{
+            marginTop: '30px',
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '12px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h4 style={{
+              margin: '0 0 15px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#495057',
+              textAlign: 'center'
+            }}>
+              🔐 Test Accounts
+            </h4>
+            <div style={{ fontSize: '12px', color: '#6c757d', lineHeight: '1.6' }}>
+              <div><strong>Student:</strong> test@test.com / 123456</div>
+              <div><strong>Admin:</strong> roo2admin@gmail.com / admin123</div>
+              <div><strong>Supervisor:</strong> ahmedazab@gmail.com / supervisor123</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
