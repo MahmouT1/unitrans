@@ -76,7 +76,7 @@ export default function ProfessionalLogin() {
     setMessage('');
 
     try {
-      const endpoint = isLogin ? '/api/auth-pro/login' : '/api/auth-pro/register';
+      const endpoint = isLogin ? '/api/login' : '/api/register';
       const requestData = isLogin 
         ? { 
             email: formData.email.trim(),
@@ -91,14 +91,13 @@ export default function ProfessionalLogin() {
 
       console.log('🔄 Professional Auth Request:', endpoint, requestData.email);
 
-      const response = await fetch(`https://unibus.online:3001${endpoint}`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(requestData),
-        credentials: 'include'
+        body: JSON.stringify(requestData)
       });
 
       const data = await response.json();
