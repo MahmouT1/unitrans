@@ -1,4 +1,7 @@
-'use client';
+// إصلاح صفحة Auth للاتصال المباشر بـ Backend
+const fs = require('fs');
+
+const fixedAuthPage = `'use client';
 
 import { useState, useEffect } from 'react';
 
@@ -92,7 +95,7 @@ export default function UnifiedAuth() {
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isAuthenticated', 'true');
 
-        setMessage(`✅ ${isLogin ? 'Login' : 'Registration'} successful! Redirecting...`);
+        setMessage(\`✅ \${isLogin ? 'Login' : 'Registration'} successful! Redirecting...\`);
         
         // Redirect based on role
         setTimeout(() => {
@@ -367,7 +370,7 @@ export default function UnifiedAuth() {
               padding: '16px',
               borderRadius: '12px',
               backgroundColor: message.includes('✅') ? '#dcfce7' : '#fef2f2',
-              border: `2px solid ${message.includes('✅') ? '#bbf7d0' : '#fecaca'}`,
+              border: \`2px solid \${message.includes('✅') ? '#bbf7d0' : '#fecaca'}\`,
               textAlign: 'center'
             }}>
               <p style={{
@@ -384,4 +387,27 @@ export default function UnifiedAuth() {
       </div>
     </div>
   );
+}`;
+
+function createFile() {
+    console.log('🔧 إصلاح صفحة Auth للاتصال المباشر بـ Backend...\n');
+    
+    // إنشاء صفحة Auth المحدثة
+    const authPath = 'frontend-new/app/auth/page.js';
+    fs.writeFileSync(authPath, fixedAuthPage);
+    console.log('✅ تم إصلاح صفحة Auth للاتصال المباشر');
+    
+    console.log('\n🎯 الإصلاحات:');
+    console.log('  📄 صفحة Auth: اتصال مباشر بـ Backend');
+    console.log('  🔗 Endpoint: https://unibus.online:3001/api/auth/login');
+    console.log('  🔗 Endpoint: https://unibus.online:3001/api/auth/register');
+    console.log('  🚀 لا حاجة لـ API proxy routes');
+    
+    console.log('\n📋 الخطوات التالية:');
+    console.log('  1. git add .');
+    console.log('  2. git commit -m "Fix: Direct backend connection for auth"');
+    console.log('  3. git push origin main');
+    console.log('  4. على السيرفر: git pull && npm run build && pm2 restart');
 }
+
+createFile();
