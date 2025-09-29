@@ -866,18 +866,24 @@ npm run build
 cd ..
 
 echo "🔄 إعادة تشغيل الخدمات..."
+
+# إنشاء مجلد اللوقز إذا لم يكن موجود
+mkdir -p logs
+
 pkill -f node || true
 sleep 2
 
 # تشغيل الباك إند
 cd backend-new
 nohup node server.js > ../logs/backend.log 2>&1 &
+echo "Backend service started on port 3001"
 sleep 3
 cd ..
 
 # تشغيل الفرونت إند
 cd frontend-new
 nohup npm start > ../logs/frontend.log 2>&1 &
+echo "Frontend service started on port 3000"
 sleep 5
 cd ..
 
