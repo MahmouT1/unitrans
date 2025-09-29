@@ -4,7 +4,7 @@ echo "🚀 UNIBUS VPS DEPLOYMENT - COMPLETE FIX"
 echo "========================================="
 
 # Navigate to project directory
-cd /home/unitrans
+cd /var/www/unitrans
 
 echo "📥 Step 1: Pulling latest changes from GitHub..."
 git fetch origin

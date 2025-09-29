@@ -4,7 +4,7 @@ echo "🔄 RESTORING ORIGINAL STUDENT PORTAL DESIGN"
 echo "============================================="
 
 # Navigate to project directory
-cd /home/unitrans
+cd /var/www/unitrans
 
 echo "📥 Step 1: Pulling latest changes..."
 git fetch origin
