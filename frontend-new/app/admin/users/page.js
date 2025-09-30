@@ -54,22 +54,13 @@ export default function StudentSearchPage() {
       
       if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
 
-      // Try backend first, fallback to frontend API
-      let response = await fetch(`https://unibus.online:3001/api/admin/students?${params}`, {
+      // Fetch students from API
+      const response = await fetch(`/api/students/all?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
-      
-      // If backend not available, try frontend proxy
-      if (!response.ok) {
-        console.warn('Backend not available, trying frontend API');
-        response = await fetch(`/api/students/search?${params}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      }
 
       const data = await response.json();
       
