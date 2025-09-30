@@ -19,24 +19,12 @@ router.get('/', async (req, res) => {
       query.supervisorId = supervisorId;
     }
     
-    // إصلاح فلترة الحالة - التأكد من أن status=open يعمل بشكل صحيح
+    // Filter by status
     if (status) {
       if (status === 'open') {
-        // للورديات المفتوحة: status = 'open' أو 'active' وليس لديها shiftEnd أو shiftEnd = null
-        query.$and = [
-          {
-            $or: [
-              { status: 'open' },
-              { status: 'active' }
-            ]
-          },
-          {
-            $and: [
-              { $or: [{ shiftEnd: { $exists: false } }, { shiftEnd: null }] },
-              { status: { $ne: 'closed' } }
-            ]
-          }
-        ];
+        // Only return shifts that are truly open (no shiftEnd)
+        query.shiftEnd = null;
+        query.status = { $ne: 'closed' };
       } else {
         query.status = status;
       }
