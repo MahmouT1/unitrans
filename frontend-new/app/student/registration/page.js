@@ -143,6 +143,13 @@ export default function StudentRegistration() {
       if (data.success) {
         setSuccess(true);
         console.log('Profile updated successfully, student data:', data.student);
+        
+        // Update localStorage with new student data
+        if (data.student) {
+          localStorage.setItem('student', JSON.stringify(data.student));
+          console.log('✅ Student data saved to localStorage');
+        }
+        
         // Generate QR code
         try {
           await fetch('https://unibus.online:3001/api/students/generate-qr', {
