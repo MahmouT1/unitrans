@@ -21,7 +21,7 @@ export default function StudentPortal() {
       const studentData = localStorage.getItem('student');
       
       if (!token || !userData) {
-        router.push('/auth');
+        router.push('/login');
         return;
       }
       

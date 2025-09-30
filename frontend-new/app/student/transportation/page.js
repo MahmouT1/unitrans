@@ -48,7 +48,7 @@ export default function TransportationPage() {
     if (userData) {
       setUser(JSON.parse(userData));
     } else {
-      router.push('/auth');
+      router.push('/login');
       return;
     }
 

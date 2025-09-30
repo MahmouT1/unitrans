@@ -25,7 +25,7 @@ export default function SupportPage() {
     const userData = localStorage.getItem('user');
     
     if (!token || !userData) {
-      router.push('/auth');
+      router.push('/login');
       return;
     }
     
