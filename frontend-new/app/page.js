@@ -235,7 +235,7 @@ export default function HomePage() {
 
             {/* Enhanced CTA Button with 3D effects */}
             <div style={{ marginTop: '40px' }}>
-              <a href="/auth" style={{
+              <a href="/login" style={{
                 display: 'inline-block',
                 padding: '20px 32px',
                 borderRadius: '20px',
