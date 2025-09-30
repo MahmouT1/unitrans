@@ -76,7 +76,7 @@ export default function ProfessionalLogin() {
     setMessage('');
 
     try {
-      const endpoint = isLogin ? '/api/login' : '/api/register';
+      const endpoint = isLogin ? '/auth-api/login' : '/auth-api/register';
       const requestData = isLogin 
         ? { 
             email: formData.email.trim(),
