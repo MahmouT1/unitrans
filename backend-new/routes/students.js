@@ -217,19 +217,25 @@ router.put('/data', async (req, res) => {
 // Generate QR Code for existing student
 router.post('/generate-qr', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, studentData } = req.body;
     
-    if (!email) {
+    console.log('🔗 QR Generation request:', { email, studentData });
+    
+    // Accept both email and studentData object
+    let query = {};
+    if (email) {
+      query.email = email.toLowerCase();
+    } else if (studentData && studentData.email) {
+      query.email = studentData.email.toLowerCase();
+    } else {
       return res.status(400).json({
         success: false,
-        message: 'Email is required'
+        message: 'Email or studentData with email is required'
       });
     }
 
     const db = await getDatabase();
-    const student = await db.collection('students').findOne({
-      email: email.toLowerCase()
-    });
+    const student = await db.collection('students').findOne(query);
     
     if (!student) {
       return res.status(404).json({
@@ -254,11 +260,17 @@ router.post('/generate-qr', async (req, res) => {
       { $set: { qrCode: qrCodeDataURL, qrData: qrData } }
     );
     
+    console.log('✅ QR code generated for:', student.email);
+    
     return res.json({
       success: true,
       message: 'QR Code generated successfully',
       qrCode: qrCodeDataURL,
-      qrData: qrData
+      student: {
+        id: student._id,
+        fullName: student.fullName,
+        email: student.email
+      }
     });
     
   } catch (error) {
