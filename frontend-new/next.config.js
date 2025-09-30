@@ -9,15 +9,6 @@ const nextConfig = {
     MONGODB_URI: process.env.MONGODB_URI,
     JWT_SECRET: process.env.JWT_SECRET
   },
-  async redirects() {
-    return [
-      {
-        source: '/auth',
-        destination: '/login',
-        permanent: true
-      }
-    ];
-  },
   async headers() {
     return [
       {
