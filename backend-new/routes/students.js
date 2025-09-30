@@ -221,34 +221,42 @@ router.post('/generate-qr', async (req, res) => {
     
     console.log('🔗 QR Generation request:', { email, studentData });
     
-    // Accept both email and studentData object
-    let query = {};
+    // Extract email from different possible sources
+    let studentEmail = null;
     if (email) {
-      query.email = email.toLowerCase();
-    } else if (studentData && studentData.email) {
-      query.email = studentData.email.toLowerCase();
-    } else {
+      studentEmail = email;
+    } else if (studentData) {
+      studentEmail = studentData.email;
+    }
+    
+    if (!studentEmail) {
       return res.status(400).json({
         success: false,
-        message: 'Email or studentData with email is required'
+        message: 'Email is required'
       });
     }
 
     const db = await getDatabase();
-    const student = await db.collection('students').findOne(query);
+    const student = await db.collection('students').findOne({
+      email: studentEmail.toLowerCase()
+    });
     
     if (!student) {
       return res.status(404).json({
         success: false,
-        message: 'Student not found'
+        message: 'Student not found in database. Please complete registration first.'
       });
     }
     
-    // Generate new QR Code
+    // Generate new QR Code with comprehensive data
     const qrData = {
       studentId: student._id.toString(),
       email: student.email,
       fullName: student.fullName,
+      phoneNumber: student.phoneNumber || 'N/A',
+      college: student.college || 'N/A',
+      grade: student.grade || 'N/A',
+      major: student.major || 'N/A',
       timestamp: new Date().toISOString()
     };
     
@@ -257,19 +265,22 @@ router.post('/generate-qr', async (req, res) => {
     // Update student with new QR code
     await db.collection('students').updateOne(
       { _id: student._id },
-      { $set: { qrCode: qrCodeDataURL, qrData: qrData } }
+      { $set: { qrCode: qrCodeDataURL, qrData: qrData, updatedAt: new Date() } }
     );
     
-    console.log('✅ QR code generated for:', student.email);
+    console.log('✅ QR code generated successfully for:', student.email);
     
     return res.json({
       success: true,
       message: 'QR Code generated successfully',
       qrCode: qrCodeDataURL,
+      qrCodeDataURL: qrCodeDataURL,
       student: {
-        id: student._id,
+        id: student._id.toString(),
         fullName: student.fullName,
-        email: student.email
+        email: student.email,
+        phoneNumber: student.phoneNumber,
+        college: student.college
       }
     });
     
@@ -277,7 +288,7 @@ router.post('/generate-qr', async (req, res) => {
     console.error('❌ Generate QR Code error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error: ' + error.message
     });
   }
 });
