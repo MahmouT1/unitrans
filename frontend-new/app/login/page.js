@@ -113,6 +113,7 @@ export default function ProfessionalLogin() {
           sessionId: `session_${Date.now()}`
         };
 
+        localStorage.setItem('token', data.token);
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userToken', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
