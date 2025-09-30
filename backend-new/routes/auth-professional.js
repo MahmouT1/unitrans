@@ -200,6 +200,26 @@ router.post('/register', async (req, res) => {
     const result = await db.collection('users').insertOne(newUser);
     console.log('✅ Professional Auth: User created with ID:', result.insertedId);
 
+    // If student role, create student record
+    if (role === 'student') {
+      const studentData = {
+        fullName: fullName.trim(),
+        email: email.toLowerCase().trim(),
+        phoneNumber: '',
+        college: '',
+        grade: '',
+        major: '',
+        address: {},
+        attendanceCount: 0,
+        isActive: true,
+        userId: result.insertedId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      await db.collection('students').insertOne(studentData);
+      console.log('✅ Professional Auth: Student record created for:', email);
+    }
+
     // Generate JWT token for immediate login
     const tokenPayload = {
       userId: result.insertedId,
