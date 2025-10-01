@@ -16,11 +16,11 @@ export async function GET() {
     
     // Query attendance records for today
     const records = await attendanceCollection.find({
-      scanTime: {
-        $gte: startOfDay,
-        $lte: endOfDay
-      }
-    }).sort({ scanTime: -1 }).toArray();
+      $or: [
+        { scanTime: { $gte: startOfDay, $lte: endOfDay } },
+        { createdAt: { $gte: startOfDay, $lte: endOfDay } }
+      ]
+    }).sort({ createdAt: -1 }).toArray();
 
     return NextResponse.json({
       success: true,
