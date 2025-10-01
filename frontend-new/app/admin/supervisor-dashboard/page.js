@@ -551,7 +551,7 @@ const SupervisorDashboard = () => {
         console.log('Student:', studentData.fullName);
         console.log('Shift ID:', currentShift.id);
 
-        const response = await fetch('/api/shifts/scan', {
+        const response = await fetch('/api/attendance/scan-qr', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -755,7 +755,7 @@ const SupervisorDashboard = () => {
           console.log('Student:', studentData.fullName);
           console.log('Shift ID:', currentShift.id);
 
-          const response = await fetch('http://localhost:3000/api/shifts/scan', {
+          const response = await fetch('http://localhost:3000/api/attendance/scan-qr', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
