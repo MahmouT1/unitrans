@@ -20,11 +20,11 @@ export default clientPromise;
 
 export async function getDatabase() {
   const client = await clientPromise;
-  return client.db('student-portal');
+  return client.db('student_portal');
 }
 
 export async function connectToDatabase() {
   const client = await clientPromise;
-  const db = client.db('student-portal');
+  const db = client.db('student_portal');
   return { client, db };
 }
