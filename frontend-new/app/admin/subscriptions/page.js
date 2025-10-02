@@ -93,15 +93,10 @@ export default function AdminSubscriptionsPage() {
       console.log('📊 Students API response students type:', typeof studentsResult.students);
       
       if (studentsResult.success && studentsResult.students) {
-        // Handle different response formats
-        let studentsArray;
-        if (Array.isArray(studentsResult.students)) {
-          // Backend format (array)
-          studentsArray = studentsResult.students;
-        } else {
-          // Frontend format (object)
-          studentsArray = Object.values(studentsResult.students);
-        }
+        // Always treat as array
+        const studentsArray = Array.isArray(studentsResult.students) 
+          ? studentsResult.students 
+          : [];
         
         const validStudents = studentsArray.filter(student => student && student.email);
         console.log(`✅ Loaded ${validStudents.length} students`);
@@ -109,7 +104,6 @@ export default function AdminSubscriptionsPage() {
         setStudents(validStudents);
       } else {
         console.error('❌ Failed to fetch students:', studentsResult);
-        // Try to show some fallback data or at least show that we tried
         setStudents([]);
       }
 
