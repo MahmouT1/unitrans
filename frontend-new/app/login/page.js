@@ -113,6 +113,7 @@ export default function ProfessionalLogin() {
           sessionId: `session_${Date.now()}`
         };
 
+        // Save to localStorage immediately
         localStorage.setItem('token', data.token);
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userToken', data.token);
@@ -122,14 +123,20 @@ export default function ProfessionalLogin() {
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('authData', JSON.stringify(authData));
 
+        // Verify token was saved
+        const savedToken = localStorage.getItem('token');
+        console.log('✅ Token saved:', savedToken ? 'Yes' : 'No');
+
         setMessage(`✅ ${isLogin ? 'تم تسجيل الدخول' : 'تم إنشاء الحساب'} بنجاح! جاري التوجيه...`);
         
-        // Professional redirect with delay
+        // Immediate redirect after saving
+        const redirectUrl = data.redirectUrl || '/student/portal';
+        console.log('🔄 Redirecting to:', redirectUrl);
+        
+        // Use setTimeout with minimal delay to ensure localStorage is written
         setTimeout(() => {
-          const redirectUrl = data.redirectUrl || '/student/portal';
-          console.log('🔄 Redirecting to:', redirectUrl);
           window.location.href = redirectUrl;
-        }, 1500);
+        }, 100);  // Reduced to 100ms
 
       } else {
         setMessage('❌ ' + (data.message || 'فشل في العملية'));
