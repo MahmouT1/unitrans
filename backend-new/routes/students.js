@@ -135,7 +135,8 @@ router.get('/data', async (req, res) => {
         qrCode: student.qrCode,
         isActive: student.isActive,
         createdAt: student.createdAt,
-        updatedAt: student.updatedAt
+        updatedAt: student.updatedAt,
+        studentId: student.studentId  // Added studentId
       }
     });
     
@@ -248,9 +249,20 @@ router.post('/generate-qr', async (req, res) => {
       });
     }
     
+    // Ensure student has a studentId
+    if (!student.studentId) {
+      // Generate studentId if missing
+      const newStudentId = `STU-${Date.now()}`;
+      await db.collection('students').updateOne(
+        { _id: student._id },
+        { $set: { studentId: newStudentId, updatedAt: new Date() } }
+      );
+      student.studentId = newStudentId;
+    }
+    
     // Generate new QR Code with comprehensive data
     const qrData = {
-      studentId: student._id.toString(),
+      studentId: student.studentId,  // Use STU-xxx format
       email: student.email,
       fullName: student.fullName,
       phoneNumber: student.phoneNumber || 'N/A',
@@ -280,7 +292,8 @@ router.post('/generate-qr', async (req, res) => {
         fullName: student.fullName,
         email: student.email,
         phoneNumber: student.phoneNumber,
-        college: student.college
+        college: student.college,
+        studentId: student.studentId  // Added studentId
       }
     });
     
