@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 PASS=0
-TOTAL=15
+TOTAL=16
 
 # ==========================================
 # الخطوة 1: إنشاء حساب طالب جديد
@@ -177,10 +177,26 @@ fi
 echo ""
 
 # ==========================================
-# الخطوة 7: Scan QR Code
+# الخطوة 7A: جلب عدد الحضور قبل المسح
 # ==========================================
 echo "======================================"
-echo -e "${YELLOW}7️⃣  Scan QR Code (ali ramy)${NC}"
+echo -e "${YELLOW}7️⃣A عدد الحضور قبل المسح${NC}"
+echo "======================================"
+
+BEFORE_SEARCH=$(curl -s "http://localhost:3001/api/students/all?search=ali" \
+  -H "Authorization: Bearer $SUPER_TOKEN")
+
+ATTENDANCE_BEFORE=$(echo "$BEFORE_SEARCH" | grep -o '"attendanceCount":[0-9]*' | grep -o '[0-9]*' | head -1)
+
+echo "عدد أيام الحضور قبل المسح: ${ATTENDANCE_BEFORE:-0}"
+
+echo ""
+
+# ==========================================
+# الخطوة 7B: Scan QR Code
+# ==========================================
+echo "======================================"
+echo -e "${YELLOW}7️⃣B Scan QR Code (ali ramy)${NC}"
 echo "======================================"
 
 SCAN=$(curl -s -X POST http://localhost:3001/api/shifts/scan \
@@ -199,6 +215,31 @@ if echo "$SCAN" | grep -q '"success":true'; then
 else
     echo -e "${RED}❌ QR Scan فشل${NC}"
     echo "$SCAN" | head -c 300
+fi
+
+echo ""
+
+# ==========================================
+# الخطوة 7C: التحقق من زيادة عدد الحضور
+# ==========================================
+echo "======================================"
+echo -e "${YELLOW}7️⃣C عدد الحضور بعد المسح${NC}"
+echo "======================================"
+
+sleep 2  # انتظار التحديث
+
+AFTER_SEARCH=$(curl -s "http://localhost:3001/api/students/all?search=ali" \
+  -H "Authorization: Bearer $SUPER_TOKEN")
+
+ATTENDANCE_AFTER=$(echo "$AFTER_SEARCH" | grep -o '"attendanceCount":[0-9]*' | grep -o '[0-9]*' | head -1)
+
+echo "عدد أيام الحضور بعد المسح: ${ATTENDANCE_AFTER:-0}"
+
+if [ "${ATTENDANCE_AFTER:-0}" -gt "${ATTENDANCE_BEFORE:-0}" ]; then
+    echo -e "${GREEN}✅ عدد الحضور زاد من ${ATTENDANCE_BEFORE:-0} إلى ${ATTENDANCE_AFTER:-0}${NC}"
+    ((PASS++))
+else
+    echo -e "${RED}❌ عدد الحضور لم يتحدث (${ATTENDANCE_BEFORE:-0} → ${ATTENDANCE_AFTER:-0})${NC}"
 fi
 
 echo ""
@@ -425,14 +466,15 @@ echo "4.  Generate QR Code: $([ $PASS -ge 4 ] && echo '✅' || echo '❌')"
 echo "5.  Supervisor Login: $([ $PASS -ge 5 ] && echo '✅' || echo '❌')"
 echo "6.  Open Shift: $([ $PASS -ge 6 ] && echo '✅' || echo '❌')"
 echo "7.  Scan QR: $([ $PASS -ge 7 ] && echo '✅' || echo '❌')"
-echo "8.  Total Scans: $([ $PASS -ge 8 ] && echo '✅' || echo '❌')"
-echo "9.  Payment: $([ $PASS -ge 9 ] && echo '✅' || echo '❌')"
-echo "10. Admin Subscriptions: $([ $PASS -ge 10 ] && echo '✅' || echo '❌')"
-echo "11. Student Subscriptions: $([ $PASS -ge 11 ] && echo '✅' || echo '❌')"
-echo "12. Student Search: $([ $PASS -ge 12 ] && echo '✅' || echo '❌')"
-echo "13. Admin Reports: $([ $PASS -ge 13 ] && echo '✅' || echo '❌')"
-echo "14. Database student_portal: $([ $PASS -ge 14 ] && echo '✅' || echo '❌')"
-echo "15. جميع الصفحات متصلة: $([ $PASS -ge 15 ] && echo '✅' || echo '❌')"
+echo "8.  عدد الحضور زاد: $([ $PASS -ge 8 ] && echo '✅' || echo '❌')"
+echo "9.  Total Scans: $([ $PASS -ge 9 ] && echo '✅' || echo '❌')"
+echo "10. Payment: $([ $PASS -ge 10 ] && echo '✅' || echo '❌')"
+echo "11. Admin Subscriptions: $([ $PASS -ge 11 ] && echo '✅' || echo '❌')"
+echo "12. Student Subscriptions: $([ $PASS -ge 12 ] && echo '✅' || echo '❌')"
+echo "13. Student Search: $([ $PASS -ge 13 ] && echo '✅' || echo '❌')"
+echo "14. Admin Reports: $([ $PASS -ge 14 ] && echo '✅' || echo '❌')"
+echo "15. Database student_portal: $([ $PASS -ge 15 ] && echo '✅' || echo '❌')"
+echo "16. جميع الصفحات متصلة: $([ $PASS -ge 16 ] && echo '✅' || echo '❌')"
 
 echo ""
 echo "═══════════════════════════════════════════════"
@@ -440,12 +482,12 @@ echo -e "${GREEN}النتيجة: $PASS/$TOTAL${NC}"
 echo "═══════════════════════════════════════════════"
 echo ""
 
-if [ $PASS -ge 12 ]; then
+if [ $PASS -ge 13 ]; then
     echo -e "${GREEN}🎉🎉🎉 المشروع يعمل بشكل ممتاز! 🎉🎉🎉${NC}"
     echo ""
     echo "معظم الوظائف تعمل بنجاح!"
 else
-    echo -e "${YELLOW}⚠️  بعض الوظائف تحتاج مراجعة${NC}"
+    echo -e "${YELLOW}⚠️  بعض الوظائف تحتاج مراجعة (النتيجة: $PASS/$TOTAL)${NC}"
 fi
 
 echo ""
