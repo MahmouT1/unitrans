@@ -65,12 +65,22 @@ const SubscriptionPaymentModal = ({
       };
 
       // Call API to process payment
-      const response = await fetch('/api/subscription/payment', {
+      const paymentPayload = {
+        studentEmail: formData.email,
+        studentName: studentData?.fullName || studentData?.name || 'Student',
+        amount: paymentAmount,
+        subscriptionType: 'monthly',
+        paymentMethod: formData.paymentMethod,
+        confirmationDate: formData.confirmationDate,
+        renewalDate: formData.renewalDate
+      };
+      
+      const response = await fetch('/api/subscriptions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(paymentData)
+        body: JSON.stringify(paymentPayload)
       });
 
       if (!response.ok) {
