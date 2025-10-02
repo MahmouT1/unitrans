@@ -74,9 +74,9 @@ export default function AdminSubscriptionsPage() {
       setLoading(true);
       console.log('🔄 Fetching subscription management data...');
       
-      // First, let's try to fetch students from backend
-      console.log('👥 Fetching students from backend...');
-      let studentsResponse = await fetch('http://localhost:3001/api/admin/students?limit=1000');
+      // Fetch students from frontend API
+      console.log('👥 Fetching students from API...');
+      let studentsResponse = await fetch('/api/students?limit=1000');
       
       // If backend not available, try frontend API
       if (!studentsResponse.ok) {
@@ -113,9 +113,9 @@ export default function AdminSubscriptionsPage() {
         setStudents([]);
       }
 
-      // Then fetch subscriptions from backend
-      console.log('💳 Fetching subscriptions from backend...');
-      let subscriptionsResponse = await fetch('http://localhost:3001/api/admin/subscriptions');
+      // Fetch subscriptions from frontend API
+      console.log('💳 Fetching subscriptions from API...');
+      let subscriptionsResponse = await fetch('/api/subscriptions');
       
       // If backend not available, try frontend API
       if (!subscriptionsResponse.ok) {
