@@ -1796,7 +1796,16 @@ const SupervisorDashboard = () => {
             </div>
             
             <button
-              onClick={() => setNotification(null)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setNotification(null);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setNotification(null);
+              }}
               style={{
                 background: 'white',
                 color: '#10b981',
@@ -1805,7 +1814,9 @@ const SupervisorDashboard = () => {
                 padding: '8px 20px',
                 fontSize: '15px',
                 fontWeight: '700',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'rgba(0,0,0,0)',
+                userSelect: 'none'
               }}
             >
               OK
