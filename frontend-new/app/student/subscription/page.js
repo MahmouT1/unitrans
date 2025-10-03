@@ -53,6 +53,7 @@ export default function SubscriptionPage() {
   const fetchSubscription = async () => {
     try {
       setLoading(true);
+      setError('');
       
       // Check if user data is available
       if (!user || !user.email) {
@@ -61,23 +62,37 @@ export default function SubscriptionPage() {
         return;
       }
       
-      // Fetch subscription data from API
-      const response = await fetch(`/api/subscription/payment?studentEmail=${encodeURIComponent(user.email)}`);
+      console.log('Fetching subscription for:', user.email);
+      
+      // Fetch subscription data from CORRECT API
+      const response = await fetch(`/api/subscriptions/student?email=${encodeURIComponent(user.email)}`);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Subscription data received:', data);
+        
         if (data.success && data.subscription) {
-          setSubscription(data.subscription);
+          // Transform data to match expected format
+          const sub = data.subscription;
+          setSubscription({
+            totalPaid: sub.totalPaid || 0,
+            confirmationDate: sub.confirmationDate || sub.startDate,
+            renewalDate: sub.renewalDate || sub.endDate,
+            status: sub.status || 'active',
+            totalPayments: sub.totalPayments || 1
+          });
         } else {
-          // No subscription found, set to null for empty state
+          // No subscription found
+          console.log('No subscription found for user');
           setSubscription(null);
         }
       } else {
-        throw new Error('Failed to fetch subscription data');
+        console.error('API response not OK:', response.status);
+        setSubscription(null);
       }
     } catch (error) {
       console.error('Failed to fetch subscription:', error);
-      setError('Failed to load subscription data');
+      setError('');
       setSubscription(null);
     } finally {
       setLoading(false);
