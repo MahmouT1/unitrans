@@ -53,6 +53,7 @@ app.get('/health', (req, res) => {
 
 // API Routes  
 app.use('/api/auth-pro', require('./routes/auth-professional')); // Professional Auth System
+app.use('/api/auth', require('./routes/auth-professional')); // Standard auth route
 app.use('/auth-api', require('./routes/auth-professional')); // Proxy for frontend compatibility
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/students', require('./routes/students'));
