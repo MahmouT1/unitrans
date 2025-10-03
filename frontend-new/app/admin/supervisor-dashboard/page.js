@@ -715,10 +715,10 @@ const SupervisorDashboard = () => {
       setAutoRegistered(false);
       stopScanning();
       
-      // Auto-switch to student details after successful scan
-      setActiveTab('student-details');
-      
-      // No fetch - just switch tab silently for smooth experience
+      // Switch to student details - smooth without fetch
+      setTimeout(() => {
+        setActiveTab('student-details');
+      }, 100);
       
       // Auto-register attendance if shift is open
       if (currentShift && currentShift.id) {
