@@ -7,6 +7,92 @@ const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
 
+// Get all subscriptions (for admin page)
+router.get('/', async (req, res) => {
+    try {
+        const { getDatabase } = require('../lib/mongodb-simple-connection');
+        const db = await getDatabase();
+        
+        // Fetch all subscriptions
+        const subscriptions = await db.collection('subscriptions')
+            .find({})
+            .sort({ createdAt: -1 })
+            .toArray();
+        
+        res.json({
+            success: true,
+            subscriptions: subscriptions
+        });
+        
+    } catch (error) {
+        console.error('Error fetching all subscriptions:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch subscriptions',
+            error: error.message
+        });
+    }
+});
+
+// Create new subscription (for payment form)
+router.post('/', async (req, res) => {
+    try {
+        const { getDatabase } = require('../lib/mongodb-simple-connection');
+        const db = await getDatabase();
+        
+        const {
+            studentEmail,
+            studentName,
+            amount,
+            subscriptionType,
+            paymentMethod,
+            status = 'active'
+        } = req.body;
+        
+        if (!studentEmail || !studentName || !amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: studentEmail, studentName, amount'
+            });
+        }
+        
+        const subscription = {
+            studentEmail,
+            studentName,
+            amount: parseFloat(amount),
+            subscriptionType: subscriptionType || 'monthly',
+            paymentMethod: paymentMethod || 'Cash',
+            status: status,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 days
+            confirmationDate: new Date(),
+            renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            remainingDays: 30,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+        
+        const result = await db.collection('subscriptions').insertOne(subscription);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Subscription created successfully',
+            subscription: {
+                ...subscription,
+                _id: result.insertedId
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error creating subscription:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create subscription',
+            error: error.message
+        });
+    }
+});
+
 // Get student's subscription
 router.get('/my-subscription', authMiddleware, async (req, res) => {
     try {
