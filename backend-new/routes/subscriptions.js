@@ -348,6 +348,72 @@ router.post('/payment/:subscriptionId', [
     }
 });
 
+// Get student subscription summary by email
+router.get('/student', async (req, res) => {
+    try {
+        const { email } = req.query;
+        
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email parameter is required'
+            });
+        }
+
+        const { getDatabase } = require('../lib/mongodb-simple-connection');
+        const db = await getDatabase();
+        
+        // Find all subscriptions for this student email
+        const subscriptions = await db.collection('subscriptions')
+            .find({ studentEmail: email })
+            .sort({ createdAt: -1 })
+            .toArray();
+        
+        if (!subscriptions || subscriptions.length === 0) {
+            return res.json({
+                success: true,
+                subscription: null,
+                message: 'No subscriptions found for this student'
+            });
+        }
+        
+        // Calculate totals
+        const totalPaid = subscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0);
+        const totalPayments = subscriptions.length;
+        
+        // Get latest subscription for dates
+        const latestSub = subscriptions[0];
+        
+        // Determine status
+        let status = 'active';
+        if (totalPaid < 2000) {
+            status = 'partial';
+        }
+        
+        const subscriptionSummary = {
+            totalPaid: totalPaid,
+            confirmationDate: latestSub.startDate || latestSub.createdAt,
+            renewalDate: latestSub.endDate,
+            status: status,
+            totalPayments: totalPayments,
+            subscriptions: subscriptions
+        };
+        
+        res.json({
+            success: true,
+            subscription: subscriptionSummary
+        });
+        
+    } catch (error) {
+        console.error('Error fetching student subscription:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch student subscription',
+            error: error.message
+        });
+    }
+});
+
 // Get subscription statistics (Admin only)
 router.get('/stats', authMiddleware, async (req, res) => {
     try {
