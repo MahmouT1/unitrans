@@ -715,9 +715,9 @@ const SupervisorDashboard = () => {
       setAutoRegistered(false);
       stopScanning();
       
-      // Don't auto-switch tabs - keep user on current tab
+      // Don't auto-switch tabs or fetch data - keep page stable on mobile
       // setActiveTab('student-details'); // Disabled - causes shake on mobile
-      await fetchCurrentShiftAttendance();
+      // await fetchCurrentShiftAttendance(); // Disabled - causes re-render issues on mobile
       
       // Auto-register attendance if shift is open
       if (currentShift && currentShift.id) {
@@ -760,56 +760,26 @@ const SupervisorDashboard = () => {
           if (result.success) {
             console.log('✅ Auto-registration successful');
             setAutoRegistered(true);
-            // Show success notification with attendance registration
-            setTimeout(() => {
-              showNotification(
-                'success',
-                'Attendance Registered Successfully!',
-                `Student: ${studentData.fullName}\nStudent ID: ${studentData.studentId}\nShift: ${currentShift.shiftType}\n\nAttendance has been automatically registered.`
-              );
-            }, 500);
+            // No notification - silent operation
           } else {
             console.log('❌ Auto-registration failed:', result.message);
             setAutoRegistered(false);
-            // Show success notification without attendance registration
-            setTimeout(() => {
-              showNotification(
-                'success',
-                'QR Code Scanned Successfully!',
-                `Student: ${studentData.fullName}\nStudent ID: ${studentData.studentId}\n\nNote: Could not auto-register attendance. Please register manually.`
-              );
-            }, 500);
+            // No notification - silent operation
           }
         } catch (error) {
           console.error('Error auto-registering attendance:', error);
-          // Show success notification without attendance registration
-          setTimeout(() => {
-            showNotification(
-              'success',
-              'QR Code Scanned Successfully!',
-              `Student: ${studentData.fullName}\nStudent ID: ${studentData.studentId}\n\nNote: Could not auto-register attendance. Please register manually.`
-            );
-          }, 500);
+          setAutoRegistered(false);
+          // No notification - silent operation
         }
       } else {
-        // Show success notification without attendance registration
-        setTimeout(() => {
-          showNotification(
-            'success',
-            'QR Code Scanned Successfully!',
-            `Student: ${studentData.fullName}\nStudent ID: ${studentData.studentId}\n\nNote: Please open a shift first to register attendance.`
-          );
-        }, 500);
+        // No notification - silent operation
+        console.log('No shift open - scan recorded without attendance');
       }
       
     } catch (error) {
       console.error('Error processing QR code:', error);
       setScanError('Invalid QR code or server error');
-      showNotification(
-        'error',
-        'QR Code Processing Error',
-        'Error processing QR code. Please try again.'
-      );
+      // No notification - silent error logging only
     }
   };
 
