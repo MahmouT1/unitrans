@@ -521,9 +521,10 @@ const SupervisorDashboard = () => {
       ]
     });
     
-    // Switch to attendance management tab
-    setActiveTab('attendance-management');
-    await fetchCurrentShiftAttendance();
+    // Switch to student details tab (smooth, no fetch)
+    setTimeout(() => {
+      setActiveTab('student-details');
+    }, 100);
     
     // Auto-register attendance if shift is open
     if (currentShift && currentShift.id) {
