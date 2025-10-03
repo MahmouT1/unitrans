@@ -521,10 +521,7 @@ const SupervisorDashboard = () => {
       ]
     });
     
-    // Switch to student details tab (smooth, no fetch)
-    setTimeout(() => {
-      setActiveTab('student-details');
-    }, 100);
+    // No auto tab switch - user stays on current tab for free navigation
     
     // Auto-register attendance if shift is open
     if (currentShift && currentShift.id) {
@@ -716,10 +713,7 @@ const SupervisorDashboard = () => {
       setAutoRegistered(false);
       stopScanning();
       
-      // Switch to student details - smooth without fetch
-      setTimeout(() => {
-        setActiveTab('student-details');
-      }, 100);
+      // No auto tab switch - user stays where they are for smooth navigation
       
       // Auto-register attendance if shift is open
       if (currentShift && currentShift.id) {
