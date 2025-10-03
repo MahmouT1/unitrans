@@ -165,6 +165,34 @@ export default function StudentSearchPage() {
     }
   };
 
+  const handleDeleteStudent = async (studentId, studentName) => {
+    if (!confirm(`هل أنت متأكد من حذف الطالب: ${studentName}؟\n\nملاحظة: سيتم حذف جميع بيانات الطالب بما في ذلك الحضور والاشتراكات.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/students/${studentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        alert('تم حذف الطالب بنجاح!');
+        fetchStudents(); // Refresh list
+      } else {
+        alert('فشل حذف الطالب: ' + (data.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      alert('حدث خطأ أثناء حذف الطالب');
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -314,6 +342,21 @@ export default function StudentSearchPage() {
                         title="View Student Details"
                       >
                         👁️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteStudent(student._id, student.fullName)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          marginLeft: '8px'
+                        }}
+                        title="Delete Student"
+                      >
+                        🗑️
                       </button>
                     </div>
                   </td>

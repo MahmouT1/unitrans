@@ -252,6 +252,50 @@ const Reports = () => {
     }
   };
 
+  const handleDeleteExpense = async (expenseId) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المصروف؟')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        alert('تم حذف المصروف بنجاح!');
+        fetchData();
+      } else {
+        alert('فشل حذف المصروف');
+      }
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      alert('حدث خطأ أثناء الحذف');
+    }
+  };
+
+  const handleDeleteDriverSalary = async (salaryId) => {
+    if (!confirm('هل أنت متأكد من حذف راتب السائق؟')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/driver-salaries/${salaryId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        alert('تم حذف راتب السائق بنجاح!');
+        fetchData();
+      } else {
+        alert('فشل حذف راتب السائق');
+      }
+    } catch (error) {
+      console.error('Error deleting driver salary:', error);
+      alert('حدث خطأ أثناء الحذف');
+    }
+  };
+
 
   if (loading) {
     return (
@@ -480,12 +524,13 @@ const Reports = () => {
                     <th>Description</th>
                     <th>Category</th>
                     <th>Amount</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {expenseData.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="no-data">
+                      <td colSpan="6" className="no-data">
                         No expenses recorded for this week
                       </td>
                     </tr>
@@ -502,6 +547,22 @@ const Reports = () => {
                         <td>{expense.category}</td>
                         <td className="amount negative">
                           {formatCurrency(expense.amount)}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleDeleteExpense(expense._id)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '14px'
+                            }}
+                          >
+                            🗑️ Delete
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -533,12 +594,13 @@ const Reports = () => {
                     <th>Rate/Hour</th>
                     <th>Amount</th>
                     <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {driverSalaryData.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="no-data">
+                      <td colSpan="7" className="no-data">
                         No driver salaries recorded for this week
                       </td>
                     </tr>
@@ -556,6 +618,22 @@ const Reports = () => {
                           <span className={`status-badge ${salary.status}`}>
                             {salary.status}
                           </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleDeleteDriverSalary(salary._id)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '14px'
+                            }}
+                          >
+                            🗑️ Delete
+                          </button>
                         </td>
                       </tr>
                     ))
