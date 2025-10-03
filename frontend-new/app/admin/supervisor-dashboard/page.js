@@ -39,18 +39,15 @@ const SupervisorDashboard = () => {
   
 
   // Show notification function - Simple blue message, 1 second only
-  const showNotification = (type, title, message, duration = 1000) => {
+  const showNotification = (type, title, message, duration = 0) => {
     setNotification({
-      type: 'info', // Always use info (blue) instead of success (green)
+      type: 'success',
       title,
       message,
       id: Date.now()
     });
     
-    // Auto-hide after 1 second
-    setTimeout(() => {
-      setNotification(null);
-    }, duration);
+    // Manual close only - no auto-hide
   };
 
   // Logout function
@@ -1767,106 +1764,52 @@ const SupervisorDashboard = () => {
         </div>
       )}
 
-      {/* Notification System */}
+      {/* Simple Top Notification */}
       {notification && (
         <div style={{
           position: 'fixed',
-          top: '20px',
-          right: '20px',
+          top: '10px',
+          left: '50%',
+          transform: 'translateX(-50%)',
           zIndex: 10000,
-          maxWidth: '400px',
-          minWidth: '300px'
+          width: '90%',
+          maxWidth: '500px'
         }}>
           <div style={{
-            background: '#3b82f6',
+            background: '#10b981',
             color: 'white',
-            padding: '16px 20px',
+            padding: '14px 16px',
             borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-            border: 'none',
-            position: 'relative',
-            overflow: 'hidden'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
           }}>
-            {/* Simple background */}
             <div style={{
-              position: 'absolute',
-              top: '-10px',
-              right: '-10px',
-              width: '40px',
-              height: '40px',
-              background: 'rgba(255,255,255,0.1)',
-              borderRadius: '50%',
-              zIndex: 0
-            }} />
-            
-            <div style={{
-              position: 'relative',
-              zIndex: 1,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px'
+              flex: 1,
+              fontSize: '16px',
+              fontWeight: '600',
+              textAlign: 'center'
             }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                background: 'rgba(255,255,255,0.2)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                flexShrink: 0
-              }}>
-                {notification.type === 'success' ? '✅' : '❌'}
-              </div>
-              
-              <div style={{ flex: 1 }}>
-                <h4 style={{
-                  margin: '0 0 8px 0',
-                  fontSize: '16px',
-                  fontWeight: '700',
-                  lineHeight: '1.2'
-                }}>
-                  {notification.title}
-                </h4>
-                <p style={{
-                  margin: '0',
-                  fontSize: '14px',
-                  lineHeight: '1.4',
-                  opacity: '0.9',
-                  whiteSpace: 'pre-line'
-                }}>
-                  {notification.message}
-                </p>
-              </div>
-              
-              <button
-                onClick={() => setNotification(null)}
-                style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'white',
-                  fontSize: '16px',
-                  transition: 'all 0.2s ease',
-                  flexShrink: 0
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-                }}
-              >
-                ×
-              </button>
+              ✅ نجاح تسجيل الحضور
             </div>
+            
+            <button
+              onClick={() => setNotification(null)}
+              style={{
+                background: 'white',
+                color: '#10b981',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 20px',
+                fontSize: '15px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}
