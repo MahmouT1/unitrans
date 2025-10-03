@@ -366,4 +366,48 @@ router.get('/all', async (req, res) => {
   }
 });
 
+// DELETE student by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { getDatabase } = require('../lib/mongodb-simple-connection');
+    const { ObjectId } = require('mongodb');
+    
+    const db = await getDatabase();
+    
+    // Get student first to get email
+    const student = await db.collection('students').findOne({ _id: new ObjectId(id) });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+    
+    // Delete student
+    await db.collection('students').deleteOne({ _id: new ObjectId(id) });
+    
+    // Delete related data
+    if (student.email) {
+      await db.collection('users').deleteMany({ email: student.email });
+      await db.collection('attendance').deleteMany({ studentEmail: student.email });
+      await db.collection('subscriptions').deleteMany({ studentEmail: student.email });
+    }
+    
+    return res.json({
+      success: true,
+      message: 'Student and related data deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error deleting student:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete student',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
