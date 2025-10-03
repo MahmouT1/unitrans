@@ -1784,7 +1784,6 @@ const SupervisorDashboard = () => {
             borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
             border: 'none',
-            transition: 'opacity 0.3s ease',
             position: 'relative',
             overflow: 'hidden'
           }}>
