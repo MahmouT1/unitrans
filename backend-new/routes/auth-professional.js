@@ -139,17 +139,20 @@ router.post('/login', async (req, res) => {
 
 // 📝 REGISTER ENDPOINT
 router.post('/register', async (req, res) => {
-  const { email, password, fullName, role = 'student' } = req.body;
+  const { email, password, fullName, name, role = 'student' } = req.body;
   let client;
 
   try {
     console.log('📝 Professional Auth: Registration attempt for', email);
 
+    // Accept both 'fullName' and 'name' for compatibility
+    const userName = fullName || name;
+
     // Input validation
-    if (!email || !password || !fullName) {
+    if (!email || !password || !userName) {
       return res.status(400).json({
         success: false,
-        message: 'جميع الحقول مطلوبة',
+        message: 'جميع الحقول مطلوبة (الاسم، البريد الإلكتروني، كلمة المرور)',
         code: 'MISSING_FIELDS'
       });
     }
@@ -187,7 +190,7 @@ router.post('/register', async (req, res) => {
     const newUser = {
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      fullName: fullName.trim(),
+      fullName: userName.trim(),
       role: role,
       isActive: true,
       emailVerified: false,
@@ -203,7 +206,7 @@ router.post('/register', async (req, res) => {
     // If student role, create student record
     if (role === 'student') {
       const studentData = {
-        fullName: fullName.trim(),
+        fullName: userName.trim(),
         email: email.toLowerCase().trim(),
         phoneNumber: '',
         college: '',
