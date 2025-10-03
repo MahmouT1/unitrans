@@ -38,16 +38,16 @@ const SupervisorDashboard = () => {
   const [notification, setNotification] = useState(null);
   
 
-  // Show notification function
-  const showNotification = (type, title, message, duration = 5000) => {
+  // Show notification function - Simple blue message, 1 second only
+  const showNotification = (type, title, message, duration = 1000) => {
     setNotification({
-      type, // 'success' or 'error'
+      type: 'info', // Always use info (blue) instead of success (green)
       title,
       message,
       id: Date.now()
     });
     
-    // Auto-hide notification after duration
+    // Auto-hide after 1 second
     setTimeout(() => {
       setNotification(null);
     }, duration);
@@ -1778,24 +1778,23 @@ const SupervisorDashboard = () => {
           minWidth: '300px'
         }}>
           <div style={{
-            background: notification.type === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            background: '#3b82f6',
             color: 'white',
-            padding: '20px',
-            borderRadius: '16px',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(10px)',
-            animation: 'slideInRight 0.3s ease-out',
+            padding: '16px 20px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+            border: 'none',
+            transition: 'opacity 0.3s ease',
             position: 'relative',
             overflow: 'hidden'
           }}>
-            {/* Background Pattern */}
+            {/* Simple background */}
             <div style={{
               position: 'absolute',
-              top: '-20px',
-              right: '-20px',
-              width: '80px',
-              height: '80px',
+              top: '-10px',
+              right: '-10px',
+              width: '40px',
+              height: '40px',
               background: 'rgba(255,255,255,0.1)',
               borderRadius: '50%',
               zIndex: 0
