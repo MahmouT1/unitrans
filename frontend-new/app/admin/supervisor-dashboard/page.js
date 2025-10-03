@@ -715,9 +715,10 @@ const SupervisorDashboard = () => {
       setAutoRegistered(false);
       stopScanning();
       
-      // Don't auto-switch tabs or fetch data - keep page stable on mobile
-      // setActiveTab('student-details'); // Disabled - causes shake on mobile
-      // await fetchCurrentShiftAttendance(); // Disabled - causes re-render issues on mobile
+      // Auto-switch to student details after successful scan
+      setActiveTab('student-details');
+      
+      // No fetch - just switch tab silently for smooth experience
       
       // Auto-register attendance if shift is open
       if (currentShift && currentShift.id) {
