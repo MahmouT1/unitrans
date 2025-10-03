@@ -60,64 +60,18 @@ const Reports = () => {
 
   const currentWeek = getWeekDateRange(selectedWeek);
 
-  // Fetch all data using the new comprehensive reports API
+  // Fetch all data using Frontend API routes only
   const fetchData = async () => {
     setLoading(true);
     try {
-      console.log('📊 Fetching comprehensive financial reports...');
+      console.log('📊 Fetching financial reports...');
       
-      // First try to get comprehensive financial report from backend
-      let financialReportRes = await fetch(`http://localhost:3001/api/reports/financial-summary?startDate=${currentWeek.start}&endDate=${currentWeek.end}`);
-      
-      if (financialReportRes.ok) {
-        const reportData = await financialReportRes.json();
-        console.log('📈 Comprehensive Financial Report:', reportData);
-        
-        if (reportData.success && reportData.report) {
-          const { summary, details } = reportData.report;
-          
-          // Set summary stats from comprehensive report
-          setSummaryStats({
-            totalRevenue: summary.totalRevenue || 0,
-            totalExpenses: summary.totalExpenses || 0,
-            totalDriverSalaries: summary.totalDriverSalaries || 0,
-            netProfit: summary.netProfit || 0,
-            profitMargin: summary.profitMargin || 0
-          });
-          
-          // Set detailed data
-          setRevenueData(details.subscriptions || []);
-          setExpenseData(details.expenses || []);
-          setDriverSalaryData(details.driverSalaries || []);
-          
-          console.log('✅ Successfully loaded comprehensive financial data');
-          return; // Exit early if comprehensive report worked
-        }
-      }
-      
-      // Fallback to individual API calls if comprehensive report fails
-      console.log('🔄 Comprehensive report not available, falling back to individual APIs...');
-      
-      // Fetch revenue from subscriptions (backend first, fallback to frontend)
-      let revenueRes = await fetch('http://localhost:3001/api/admin/subscriptions');
-      if (!revenueRes.ok) {
-        console.log('🔄 Backend not available for subscriptions, trying frontend API...');
-        revenueRes = await fetch('/api/subscription/payment?admin=true');
-      }
-      
-      // Fetch expenses from backend
-      let expenseRes = await fetch(`http://localhost:3001/api/expenses?startDate=${currentWeek.start}&endDate=${currentWeek.end}`);
-      if (!expenseRes.ok) {
-        console.log('🔄 Backend not available for expenses, trying frontend API...');
-        expenseRes = await fetch(`/api/expenses?startDate=${currentWeek.start}&endDate=${currentWeek.end}`);
-      }
-      
-      // Fetch driver salaries from backend
-      let driverRes = await fetch(`http://localhost:3001/api/driver-salaries?startDate=${currentWeek.start}&endDate=${currentWeek.end}`);
-      if (!driverRes.ok) {
-        console.log('🔄 Backend not available for driver salaries, trying frontend API...');
-        driverRes = await fetch(`/api/driver-salaries?startDate=${currentWeek.start}&endDate=${currentWeek.end}`);
-      }
+      // Fetch all data using Frontend API routes
+      const [revenueRes, expenseRes, driverRes] = await Promise.all([
+        fetch('/api/subscriptions'),
+        fetch(`/api/expenses?startDate=${currentWeek.start}&endDate=${currentWeek.end}`),
+        fetch(`/api/driver-salaries?startDate=${currentWeek.start}&endDate=${currentWeek.end}`)
+      ]);
 
       const [revenueData, expenseData, driverData] = await Promise.all([
         revenueRes.json(),
@@ -129,7 +83,7 @@ const Reports = () => {
       console.log('💸 Expense data:', expenseData);
       console.log('👨‍💼 Driver salary data:', driverData);
 
-      // Handle different response formats for revenue/subscriptions
+      // Handle subscriptions
       let subscriptions = [];
       if (revenueData.success) {
         subscriptions = revenueData.subscriptions || [];
@@ -150,13 +104,13 @@ const Reports = () => {
       }
       setDriverSalaryData(salaries);
 
-      // Calculate summary stats
-      const totalRevenue = subscriptions.reduce((sum, sub) => sum + (sub.totalPaid || 0), 0);
+      // Calculate summary stats - sum all subscription amounts
+      const totalRevenue = subscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0);
       const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
       const totalDriverSalaries = salaries.reduce((sum, sal) => sum + (sal.amount || 0), 0);
       const netProfit = totalRevenue - totalExpenses - totalDriverSalaries;
 
-      console.log('📈 Financial Summary (fallback):', {
+      console.log('📈 Financial Summary:', {
         totalRevenue,
         totalExpenses,
         totalDriverSalaries,
@@ -172,7 +126,6 @@ const Reports = () => {
 
     } catch (error) {
       console.error('❌ Error fetching financial data:', error);
-      // Set fallback/sample data for demonstration
       setSummaryStats({
         totalRevenue: 0,
         totalExpenses: 0,
@@ -216,7 +169,7 @@ const Reports = () => {
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3001/api/expenses', {
+      const response = await fetch('/api/expenses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,6 +188,7 @@ const Reports = () => {
 
       if (response.ok) {
         console.log('✅ Expense added successfully');
+        alert('Expense added successfully!');
         setExpenseForm({
           type: '',
           amount: '',
@@ -249,9 +203,11 @@ const Reports = () => {
         fetchData(); // Refresh the data
       } else {
         console.error('❌ Failed to add expense');
+        alert('Failed to add expense');
       }
     } catch (error) {
       console.error('❌ Error adding expense:', error);
+      alert('Error adding expense: ' + error.message);
     }
   };
 
@@ -259,7 +215,7 @@ const Reports = () => {
   const handleDriverSalarySubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:3001/api/driver-salaries', {
+      const response = await fetch('/api/driver-salaries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -275,6 +231,7 @@ const Reports = () => {
 
       if (response.ok) {
         console.log('✅ Driver salary added successfully');
+        alert('Driver salary added successfully!');
         setDriverSalaryForm({
           driverName: '',
           amount: '',
@@ -288,6 +245,7 @@ const Reports = () => {
         fetchData(); // Refresh the data
       } else {
         console.error('❌ Failed to add driver salary');
+        alert('Failed to add driver salary');
       }
     } catch (error) {
       console.error('❌ Error adding driver salary:', error);
