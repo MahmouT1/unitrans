@@ -38,16 +38,10 @@ const SupervisorDashboard = () => {
   const [notification, setNotification] = useState(null);
   
 
-  // Show notification function - Simple blue message, 1 second only
+  // Notification disabled - no notifications after QR scan
   const showNotification = (type, title, message, duration = 0) => {
-    setNotification({
-      type: 'success',
-      title,
-      message,
-      id: Date.now()
-    });
-    
-    // Manual close only - no auto-hide
+    // Do nothing - notifications disabled
+    console.log('Notification (disabled):', title, message);
   };
 
   // Logout function
@@ -1764,66 +1758,7 @@ const SupervisorDashboard = () => {
         </div>
       )}
 
-      {/* Simple Top Notification */}
-      {notification && (
-        <div style={{
-          position: 'fixed',
-          top: '10px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10000,
-          width: '90%',
-          maxWidth: '500px'
-        }}>
-          <div style={{
-            background: '#10b981',
-            color: 'white',
-            padding: '14px 16px',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
-          }}>
-            <div style={{
-              flex: 1,
-              fontSize: '16px',
-              fontWeight: '600',
-              textAlign: 'center'
-            }}>
-              ✅ نجاح تسجيل الحضور
-            </div>
-            
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setNotification(null);
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setNotification(null);
-              }}
-              style={{
-                background: 'white',
-                color: '#10b981',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 20px',
-                fontSize: '15px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'rgba(0,0,0,0)',
-                userSelect: 'none'
-              }}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Notifications disabled - no more popup messages */}
 
       {/* Notification Styles */}
       <style jsx>{`
