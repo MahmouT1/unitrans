@@ -344,7 +344,7 @@ export default function StudentSearchPage() {
                         👁️
                       </button>
                       <button
-                        onClick={() => handleDeleteStudent(student._id, student.fullName)}
+                        onClick={() => handleDeleteStudent(student.id || student._id, student.fullName)}
                         style={{
                           padding: '6px 12px',
                           backgroundColor: '#ef4444',
