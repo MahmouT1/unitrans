@@ -301,14 +301,26 @@ const AccurateQRScanner = ({ onScanSuccess, onScanError, supervisorId, superviso
   };
 
   const stopScanning = () => {
+    console.log('🛑 Stopping all scanning processes...');
+    
+    // Stop requestAnimationFrame loop
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
+    
+    // Stop ZXing reader
     stopZxing();
+    
+    // Clear any pending intervals
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
     
     setIsScanning(false);
     setMessage('📱 Camera active - ready to scan');
+    console.log('✅ All scanning processes stopped');
   };
 
   const scanForQR = () => {
@@ -381,10 +393,10 @@ const AccurateQRScanner = ({ onScanSuccess, onScanError, supervisorId, superviso
 
   const handleQRDetection = (qrData) => {
     try {
-      // Prevent duplicate scans within 800ms (reduced for better responsiveness)
+      // Prevent duplicate scans within 3000ms (3 seconds) for mobile stability
       const now = Date.now();
-      if (now - lastScanTime < 800) {
-        console.log('⏭️ Duplicate scan prevented');
+      if (now - lastScanTime < 3000) {
+        console.log('⏭️ Duplicate scan prevented (waiting for cooldown)');
         return;
       }
       setLastScanTime(now);
@@ -457,13 +469,8 @@ const AccurateQRScanner = ({ onScanSuccess, onScanError, supervisorId, superviso
         onScanSuccess(studentData);
       }
       
-      // Reset after 3 seconds
-      setTimeout(() => {
-        setMessage('📱 Camera active! Point at QR code to scan');
-        if (cameraState === 'active') {
-          startScanning();
-        }
-      }, 3000);
+      // No auto-restart - user can manually scan next QR if needed
+      setMessage('✅ QR scanned! Ready for next scan');
       
     } catch (error) {
       console.error('❌ Error processing QR code:', error);
