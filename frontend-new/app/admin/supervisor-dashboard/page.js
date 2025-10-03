@@ -715,8 +715,8 @@ const SupervisorDashboard = () => {
       setAutoRegistered(false);
       stopScanning();
       
-      // Switch to student details tab to show complete information
-      setActiveTab('student-details');
+      // Don't auto-switch tabs - keep user on current tab
+      // setActiveTab('student-details'); // Disabled - causes shake on mobile
       await fetchCurrentShiftAttendance();
       
       // Auto-register attendance if shift is open
