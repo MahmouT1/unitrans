@@ -434,6 +434,41 @@ router.post('/payment/:subscriptionId', [
     }
 });
 
+// Delete subscription by ID
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { getDatabase } = require('../lib/mongodb-simple-connection');
+        const { ObjectId } = require('mongodb');
+        const db = await getDatabase();
+        
+        // Delete subscription
+        const result = await db.collection('subscriptions').deleteOne({
+            _id: new ObjectId(id)
+        });
+        
+        if (result.deletedCount === 1) {
+            res.json({
+                success: true,
+                message: 'Subscription deleted successfully'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                message: 'Subscription not found'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error deleting subscription:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete subscription',
+            error: error.message
+        });
+    }
+});
+
 // Get student subscription summary by email
 router.get('/student', async (req, res) => {
     try {
