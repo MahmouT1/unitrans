@@ -232,35 +232,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div style={{ background: '#f7fafc', border: '2px solid #e2e8f0', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-        <h3 style={{ color: '#2d3748', margin: '0 0 15px 0' }}>📈 Recent Activity</h3>
-        {dashboardData.recentActivity.length > 0 ? (
-          <div>
-            {dashboardData.recentActivity.map((activity, index) => (
-              <div key={index} style={{ 
-                background: 'white', 
-                border: '1px solid #e2e8f0', 
-                borderRadius: '8px', 
-                padding: '15px', 
-                margin: '10px 0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <strong>{activity.student}</strong>
-                  <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>{activity.location}</div>
-                </div>
-                <div style={{ color: '#4a5568', fontSize: '0.9rem' }}>{activity.time}</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p style={{ color: '#6b7280', textAlign: 'center', padding: '20px' }}>No recent activity</p>
-        )}
-      </div>
-
       <section className="cards">
         <div className="card" onClick={() => window.location.href = '/admin/attendance'} style={{cursor: 'pointer'}}>
           <div className="card-icon">
