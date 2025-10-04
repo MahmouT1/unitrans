@@ -14,8 +14,8 @@ echo "" && \
 echo "🧪 اختبار UPDATE..." && \
 echo "-------------------" && \
 
-# Get first schedule ID
-SCHEDULE_ID=$(mongosh student_portal --quiet --eval 'print(db.transportation.findOne()._id)' 2>/dev/null)
+# Get first schedule ID (extract hex string only)
+SCHEDULE_ID=$(mongosh student_portal --quiet --eval 'print(db.transportation.findOne()._id.toString())' 2>/dev/null)
 
 if [ -n "$SCHEDULE_ID" ]; then
   echo "Testing UPDATE for ID: $SCHEDULE_ID"
