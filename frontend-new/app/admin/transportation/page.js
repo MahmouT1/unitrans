@@ -31,14 +31,7 @@ export default function TransportationManagement() {
   const fetchTransportationData = async () => {
     try {
       setLoading(true);
-      // Try backend first, then fallback to frontend API
-      let response;
-      try {
-        response = await fetch('http://localhost:3001/api/transportation');
-      } catch (backendError) {
-        console.log('Backend not available, trying frontend API...');
-        response = await fetch('/api/transportation');
-      }
+      const response = await fetch('/api/transportation');
 
       if (response.ok) {
         const data = await response.json();
@@ -104,8 +97,8 @@ export default function TransportationManagement() {
     try {
       const method = editingSchedule ? 'PUT' : 'POST';
       const url = editingSchedule 
-        ? `http://localhost:3001/api/transportation/${editingSchedule._id}` 
-        : 'http://localhost:3001/api/transportation';
+        ? `/api/transportation/${editingSchedule._id}` 
+        : '/api/transportation';
 
       const submitData = {
         ...formData,
@@ -113,29 +106,13 @@ export default function TransportationManagement() {
         days: formData.days || []
       };
 
-      let response;
-      try {
-        response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submitData),
-        });
-      } catch (backendError) {
-        // Fallback to frontend API
-        const fallbackUrl = editingSchedule 
-          ? `/api/transportation/${editingSchedule._id}` 
-          : '/api/transportation';
-        
-        response = await fetch(fallbackUrl, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submitData),
-        });
-      }
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
+      });
 
       const data = await response.json();
 

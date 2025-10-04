@@ -13,14 +13,7 @@ export default function TransportationPage() {
   const fetchTransportationData = async () => {
     try {
       setLoading(true);
-      // Try backend first, then fallback to frontend API
-      let response;
-      try {
-        response = await fetch('http://localhost:3001/api/transportation/active/schedules');
-      } catch (backendError) {
-        console.log('Backend not available, trying frontend API...');
-        response = await fetch('/api/transportation');
-      }
+      const response = await fetch('/api/transportation');
       
       if (response.ok) {
         const data = await response.json();
