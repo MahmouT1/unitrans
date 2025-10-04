@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
 const Transportation = require('../models/Transportation');
 
 const router = express.Router();
@@ -96,7 +97,7 @@ router.post('/', async (req, res) => {
             status: status || 'Active',
             days: Array.isArray(days) ? days : [],
             description: description ? description.trim() : '',
-            createdBy: new mongoose.Types.ObjectId(), // Default admin ObjectId
+            createdBy: new ObjectId(), // Default admin ObjectId
             createdAt: new Date(),
             updatedAt: new Date()
         };
