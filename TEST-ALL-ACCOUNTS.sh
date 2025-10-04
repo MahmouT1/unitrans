@@ -13,7 +13,7 @@ test_login() {
   echo "Testing: $name"
   echo "Email: $email"
   
-  response=$(curl -s -X POST "http://localhost:3001/api/auth-professional/login" \
+  response=$(curl -s -X POST "http://localhost:3001/api/auth/login" \
     -H "Content-Type: application/json" \
     -d "{\"email\":\"$email\",\"password\":\"$password\"}")
   
