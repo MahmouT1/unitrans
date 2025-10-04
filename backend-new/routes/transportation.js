@@ -146,7 +146,7 @@ router.put('/:id', async (req, res) => {
         } = req.body;
 
         // Validate ObjectId
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!ObjectId.isValid(id)) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid transportation schedule ID'
@@ -201,7 +201,7 @@ router.put('/:id', async (req, res) => {
 
         const transportationCollection = db.collection('transportation');
         const result = await transportationCollection.updateOne(
-            { _id: new mongoose.Types.ObjectId(id) },
+            { _id: new ObjectId(id) },
             { $set: updateData }
         );
 
@@ -240,7 +240,7 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
 
         // Validate ObjectId
-        if (!mongoose.Types.ObjectId.isValid(id)) {
+        if (!ObjectId.isValid(id)) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid transportation schedule ID'
@@ -257,7 +257,7 @@ router.delete('/:id', async (req, res) => {
 
         const transportationCollection = db.collection('transportation');
         const result = await transportationCollection.deleteOne({
-            _id: new mongoose.Types.ObjectId(id)
+            _id: new ObjectId(id)
         });
 
         if (result.deletedCount === 0) {
